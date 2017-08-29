@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Heatmaps</title>
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      
+      #floating-panel {
+        background-color: #fff;
+        border: 1px solid #999;
+        left: 25%;
+        padding: 5px;
+        position: absolute;
+        top: 10px;
+        z-index: 5;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="floating-panel">
+      <input id="slider" value="0" type="range"  min="0" max="60" step="5" />
+      
+      <input id="tiCheckbox" name="tiCheckbox" value="TI" type="checkbox" onclick="toogleBase('TI')" checked="checked">
+      <label for="tiCheckbox">TI</label>
+      <input id="beCheckbox" name="beCheckbox" value="BE" type="checkbox" onclick="toogleBase('BE')" checked="checked">
+      <label for="beCheckbox">BE</label>
+      <input id="bsCheckbox" name="bsCheckbox" value="BS" type="checkbox" onclick="toogleBase('BS')" checked="checked">
+      <label for="bsCheckbox">BS</label>
+      <input id="grCheckbox" name="grCheckbox" value="GR" type="checkbox" onclick="toogleBase('GR')" checked="checked">
+      <label for="grCheckbox">GR</label>
+      <input id="enCheckbox" name="enCheckbox" value="EN" type="checkbox" onclick="toogleBase('EN')" checked="checked">
+      <label for="enCheckbox">EN</label>
+      <input id="lsCheckbox" name="lsCheckbox" value="LS" type="checkbox" onclick="toogleBase('LS')" checked="checked">
+      <label for="lsCheckbox">LS</label>
+      <input id="boCheckbox" name="boCheckbox" value="BO" type="checkbox" onclick="toogleBase('BO')" checked="checked">
+      <label for="boCheckbox">BO</label>
+      <input id="moCheckbox" name="moCheckbox" value="MO" type="checkbox" onclick="toogleBase('MO')" checked="checked">
+      <label for="moCheckbox">MO</label>
+      <input id="sgCheckbox" name="sgCheckbox" value="SG" type="checkbox" onclick="toogleBase('SG')" checked="checked">
+      <label for="sgCheckbox">SG</label>
+      <input id="urCheckbox" name="urCheckbox" value="UR" type="checkbox" onclick="toogleBase('UR')" checked="checked">
+      <label for="urCheckbox">UR</label>
+      <input id="zhCheckbox" name="zhCheckbox" value="ZH" type="checkbox" onclick="toogleBase('ZH')" checked="checked">
+      <label for="zhCheckbox">ZH</label>
+      <input id="zwCheckbox" name="zwCheckbox" value="ZW" type="checkbox" onclick="toogleBase('ZW')" checked="checked">
+      <label for="zwCheckbox">ZW</label>
+      <input id="geCheckbox" name="geCheckbox" value="GE" type="checkbox" onclick="toogleBase('GE')" checked="checked">
+      <label for="geCheckbox">GE</label>    
+    </div>
+    <div id="map"></div>
+    <script>
+
+     
+
+
+      var map, heatmap;
+
+      var tiLatLng = {lat: 46.163056, lng: 8.881944};
+      var beLatLng = {lat: 46.910556, lng: 7.506111};
+      var bsLatLng = {lat: 47.605556, lng: 8.521944};
+      var lsLatLng = {lat: 46.547222, lng: 6.618056};
+      var grLatLng = {lat: 46.912778, lng: 9.551111};
+      var sgLatLng = {lat: 47.409722, lng: 9.295556};
+      var urLatLng = {lat: 46.834167, lng: 8.638889};
+      var enLatLng = {lat: 46.530556, lng: 9.878333};
+      var boLatLng = {lat: 46.670000, lng: 7.876111};
+      var moLatLng = {lat: 47.078056, lng: 9.066111};
+      var zwLatLng = {lat: 46.555278, lng: 7.379722};
+      var zhLatLng = {lat: 47.396111, lng: 8.637500};
+      var geLatLng = {lat: 46.233611, lng: 6.096944};
+
+
+      var title=['TI','BE','BS','LS','GR','SG','UR','EN','BO','MO','ZH','ZW','GE'];
+
+      var locations=[tiLatLng,beLatLng,bsLatLng,lsLatLng,grLatLng,sgLatLng,urLatLng,enLatLng,boLatLng,moLatLng,zhLatLng,zwLatLng,geLatLng];
+
+      var markers=[];
+
+      var heatmap=[];
+
+      var gradients = [
+      	  'rgba(0, 255, 255, 0)',
+          'rgba(0, 255, 255, 1)',
+          'rgba(0, 191, 255, 1)',
+          'rgba(0, 127, 255, 1)',
+          'rgba(0, 63, 255, 1)',
+          'rgba(0, 0, 255, 1)',
+          'rgba(0, 0, 223, 1)',
+          'rgba(0, 0, 191, 1)',
+          'rgba(0, 0, 159, 1)',
+          'rgba(0, 0, 127, 1)',
+          'rgba(63, 0, 91, 1)',
+          'rgba(127, 0, 63, 1)',
+          'rgba(191, 0, 31, 1)',
+          'rgba(255, 0, 0, 1)'];
+
+
+      function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 13,
+          center: {lat: 46.76, lng: 7.42},
+          mapTypeId: 'satellite'
+        });
+
+        for(var i=0;i<12;i++){        	
+	        heatmap[i] = new google.maps.visualization.HeatmapLayer({
+   	    	  data: getPoints(locations[i]),
+    	      map: map
+        	});
+        }
+
+        loadMarker();
+      }
+
+
+      
+      function loadMarker(){
+      	for(var i=0; i<12; i++){
+			marker = new google.maps.Marker({
+      			position: locations[i],
+      			map: map,
+      			title: title[i],
+      			label: title[i]
+      		});
+      		markers[i]=marker;
+      	}
+      }
+
+      function toogleBase(title){
+       for (var i = 0; i < markers.length; i++) {
+        	var marker = markers[i];
+        	var heatmap = heatmaps[i];
+       		if(marker.getTitle()==title){
+        		if (!marker.getVisible()) {
+            		marker.setVisible(true);
+            		heatmap.setMap(map);
+	        	} else {
+        	    	marker.setVisible(false);
+        	    	heatmap.setMap(null);
+    	    	}
+    		}
+    	}
+      }
+
+      // Heatmap data: 500 Points
+      function getPoints(position) {
+        var lotsOfMarkers = [];
+
+	    for( var i = 1; i <= 1000; i++) {
+			
+        	var random = new google.maps.LatLng(randomGeo(position,50000));
+    		
+        	lotsOfMarkers.push(random);
+    	}
+
+	    return lotsOfMarkers;
+      }
+
+      function randomGeo(center, radius) {
+		    var y0 = center.lat;
+		    var x0 = center.lng;
+		    var rd = radius / 111300;
+
+		    var u = Math.random();
+		    var v = Math.random();
+
+		    var w = rd * Math.sqrt(u);
+		    var t = 2 * Math.PI * v;
+		    var x = w * Math.cos(t);
+		    var y = w * Math.sin(t);
+
+		  //  var xp = x / Math.cos(y0);
+
+		    return {
+		        'lat': y + y0,
+		        'lng': x + x0
+		    };
+	}
+
+	  
+
+    </script>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBA10hCAMKhgQfiV66HILd0cARMnQ8tPaw&libraries=visualization&callback=initMap">
+    </script>
+  </body>
+</html>
