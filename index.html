@@ -30,7 +30,22 @@
 
     <body>
       <div id="floating-panel">
-        <input id="slider" value="0" type="range"  min="0" max="60" step="5" />
+        <input id="slider" value="0" type="range"  min="0" max="60" step="5" list="timeList"/>
+        <datalist id="timeList">
+          <option>0</option>
+          <option>5</option>
+          <option>10</option>
+          <option>15</option>
+          <option>20</option>
+          <option>25</option>
+          <option>30</option>
+          <option>35</option>
+          <option>40</option>
+          <option>45</option>
+          <option>50</option>
+          <option>55</option>
+          <option>60</option>
+        </datalist>
         
         <input id="tiCheckbox" name="tiCheckbox" value="TI" type="checkbox" onclick="toogleBase('TI')" checked="checked">
         <label for="tiCheckbox">TI</label>
@@ -87,22 +102,6 @@
 
         var heatmaps=[];
 
-        var gradients = [
-        	  'rgba(0, 255, 255, 0)',
-            'rgba(0, 255, 255, 1)',
-            'rgba(0, 191, 255, 1)',
-            'rgba(0, 127, 255, 1)',
-            'rgba(0, 63, 255, 1)',
-            'rgba(0, 0, 255, 1)',
-            'rgba(0, 0, 223, 1)',
-            'rgba(0, 0, 191, 1)',
-            'rgba(0, 0, 159, 1)',
-            'rgba(0, 0, 127, 1)',
-            'rgba(63, 0, 91, 1)',
-            'rgba(127, 0, 63, 1)',
-            'rgba(191, 0, 31, 1)',
-            'rgba(255, 0, 0, 1)'];
-
 
         function initMap() {
           map = new google.maps.Map(document.getElementById('map'), {
@@ -122,7 +121,7 @@
         }
 
 
-        
+        // Build base markers
         function loadMarker(){
         	for(var i=0; i<13; i++){
   			   marker = new google.maps.Marker({
@@ -135,6 +134,7 @@
         	}
         }
 
+        //Toogle base markers and respective heatmap
         function toogleBase(title){
          for (var i = 0; i < markers.length; i++) {
           	var marker = markers[i];
@@ -154,17 +154,14 @@
         // Heatmap data: 500 Points
         function getPoints(position) {
           var lotsOfMarkers = [];
-
-  	    for( var i = 1; i <= 500; i++) {
-  			
-          	var random = new google.maps.LatLng(randomGeo(position,8000));
-      		
-          	lotsOfMarkers.push(random);
-      	}
-
-  	    return lotsOfMarkers;
+            for( var i = 1; i <= 500; i++) {
+    			   var random = new google.maps.LatLng(randomGeo(position,8000));
+      		   lotsOfMarkers.push(random);
+      	    }
+  	     return lotsOfMarkers;
         }
 
+        //Random function to generate points around a center coordinate
         function randomGeo(center, radius) {
   		    var y0 = center.lat;
   		    var x0 = center.lng;
@@ -178,11 +175,11 @@
   		    var x = w * Math.cos(t);
   		    var y = w * Math.sin(t);
 
-  		  //  var xp = x / Math.cos(y0);
+  		    var xp = x / Math.cos(y0);
 
   		    return {
   		        'lat': y + y0,
-  		        'lng': x + x0
+  		        'lng': xp + x0
   		    };
   	}
 
