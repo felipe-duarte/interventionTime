@@ -72,16 +72,13 @@
         <input id="zwCheckbox" name="zwCheckbox" value="ZW" type="checkbox" onclick="toogleBase('ZW')" checked="checked">
         <label for="zwCheckbox">ZW</label>
         <input id="geCheckbox" name="geCheckbox" value="GE" type="checkbox" onclick="toogleBase('GE')" checked="checked">
-        <label for="geCheckbox">GE</label>    
+        <label for="geCheckbox">GE</label>
+        <input id="onloadCheckbox" name="onloadCheckbox" value="SERVER" type="checkbox" onclick="load()">
+        <label for="onloadCheckbox">SERVER</label>
       </div>
       <div id="map"></div>
-      <script src="interventionTime.js">
-
-        
-
-  	  
-
-      </script>
+      <script src="assets/jquery-3.2.1.min.js"></script>
+      <script src="assets/interventionTime.js"></script>
       <script async defer
           src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBA10hCAMKhgQfiV66HILd0cARMnQ8tPaw&libraries=visualization&callback=initMap">
       </script>
