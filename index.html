@@ -2,12 +2,13 @@
   <html>
     <head>
       <meta charset="utf-8">
-      <title>Intervention Time HeatMaps</title>
+      <title>Intervention Time</title>
       <style>
         /* Always set the map height explicitly to define the size of the div
          * element that contains the map. */
         #map {
           height: 100%;
+          z-index:1;
         }
         /* Optional: Makes the sample page fill the window. */
         html, body {
@@ -17,68 +18,120 @@
         }
         
         #floating-panel {
-          background-color: #fff;
-          border: 1px solid #999;
-          left: 25%;
-          padding: 5px;
-          position: absolute;
-          top: 10px;
-          z-index: 5;
+          z-index:100; 
+          background-color: rgba(200,200,200,.6); 
+          padding: 10px;
+          position:absolute;
+          top:70px;
+          left:10px;
+          cursor: move;
+          border: black 1px solid;
+          font-family: 'Raleway', sans-serif;
+          font-weight: bold;
         }
+
+        #time-label{
+          margin-top: 10px;
+          margin-bottom: 10px;
+        }
+
+        #time-slider{
+          width:100px;
+          margin: 10px;
+        }
+
+        #time-slider .ui-slider-handle{
+          cursor:pointer;
+        }
+
       </style>
     </head>
 
     <body>
       <div id="floating-panel">
-        <input id="slider" value="0" type="range"  min="0" max="60" step="5" list="timeList"/>
-        <datalist id="timeList">
-          <option>0</option>
-          <option>5</option>
-          <option>10</option>
-          <option>15</option>
-          <option>20</option>
-          <option>25</option>
-          <option>30</option>
-          <option>35</option>
-          <option>40</option>
-          <option>45</option>
-          <option>50</option>
-          <option>55</option>
-          <option>60</option>
-        </datalist>
         
-        <input id="tiCheckbox" name="tiCheckbox" value="TI" type="checkbox" onclick="toogleBase('TI')" checked="checked">
-        <label for="tiCheckbox">TI</label>
-        <input id="beCheckbox" name="beCheckbox" value="BE" type="checkbox" onclick="toogleBase('BE')" checked="checked">
-        <label for="beCheckbox">BE</label>
-        <input id="bsCheckbox" name="bsCheckbox" value="BS" type="checkbox" onclick="toogleBase('BS')" checked="checked">
-        <label for="bsCheckbox">BS</label>
-        <input id="grCheckbox" name="grCheckbox" value="GR" type="checkbox" onclick="toogleBase('GR')" checked="checked">
-        <label for="grCheckbox">GR</label>
-        <input id="enCheckbox" name="enCheckbox" value="EN" type="checkbox" onclick="toogleBase('EN')" checked="checked">
-        <label for="enCheckbox">EN</label>
-        <input id="lsCheckbox" name="lsCheckbox" value="LS" type="checkbox" onclick="toogleBase('LS')" checked="checked">
-        <label for="lsCheckbox">LS</label>
-        <input id="boCheckbox" name="boCheckbox" value="BO" type="checkbox" onclick="toogleBase('BO')" checked="checked">
-        <label for="boCheckbox">BO</label>
-        <input id="moCheckbox" name="moCheckbox" value="MO" type="checkbox" onclick="toogleBase('MO')" checked="checked">
-        <label for="moCheckbox">MO</label>
-        <input id="sgCheckbox" name="sgCheckbox" value="SG" type="checkbox" onclick="toogleBase('SG')" checked="checked">
-        <label for="sgCheckbox">SG</label>
-        <input id="urCheckbox" name="urCheckbox" value="UR" type="checkbox" onclick="toogleBase('UR')" checked="checked">
-        <label for="urCheckbox">UR</label>
-        <input id="zhCheckbox" name="zhCheckbox" value="ZH" type="checkbox" onclick="toogleBase('ZH')" checked="checked">
+        <div id="time-label"> Time: 0</div>
+        <div id="time-slider"></div>
+
+        <div>
+          <hr>
+        </div>
+
+        <div>
+        <input id="zhCheckbox" name="zhCheckbox" value="ZH" type="checkbox" onclick="toogleBase('ZH')">
         <label for="zhCheckbox">ZH</label>
-        <input id="zwCheckbox" name="zwCheckbox" value="ZW" type="checkbox" onclick="toogleBase('ZW')" checked="checked">
+        </div>
+
+        <div>
+        <input id="bsCheckbox" name="bsCheckbox" value="BS" type="checkbox" onclick="toogleBase('BS')">
+        <label for="bsCheckbox">BS</label>
+        </div>
+
+        <div>
+        <input id="beCheckbox" name="beCheckbox" value="BE" type="checkbox" onclick="toogleBase('BE')">
+        <label for="beCheckbox">BE</label>
+        </div>
+
+        <div>
+        <input id="lsCheckbox" name="lsCheckbox" value="LS" type="checkbox" onclick="toogleBase('LS')">
+        <label for="lsCheckbox">LS</label>
+        </div>
+
+        <div>
+        <input id="grCheckbox" name="grCheckbox" value="GR" type="checkbox" onclick="toogleBase('GR')">
+        <label for="grCheckbox">GR</label>
+        </div>
+
+        <div>
+        <input id="tiCheckbox" name="tiCheckbox" value="TI" type="checkbox" onclick="toogleBase('TI')">
+        <label for="tiCheckbox">TI</label>
+        </div>
+
+        <div>
+        <input id="sgCheckbox" name="sgCheckbox" value="SG" type="checkbox" onclick="toogleBase('SG')">
+        <label for="sgCheckbox">SG</label>
+        </div>
+
+        <div>
+        <input id="urCheckbox" name="urCheckbox" value="UR" type="checkbox" onclick="toogleBase('UR')">
+        <label for="urCheckbox">UR</label>
+        </div>
+
+        <div>
+        <input id="enCheckbox" name="enCheckbox" value="EN" type="checkbox" onclick="toogleBase('EN')">
+        <label for="enCheckbox">EN</label>
+        </div>
+
+        <div>
+        <input id="boCheckbox" name="boCheckbox" value="BO" type="checkbox" onclick="toogleBase('BO')">
+        <label for="boCheckbox">BO</label>
+        </div>
+
+        <div>
+        <input id="moCheckbox" name="moCheckbox" value="MO" type="checkbox" onclick="toogleBase('MO')">
+        <label for="moCheckbox">MO</label>
+        </div>
+
+        <div>
+        <input id="zwCheckbox" name="zwCheckbox" value="ZW" type="checkbox" onclick="toogleBase('ZW')">
         <label for="zwCheckbox">ZW</label>
-        <input id="geCheckbox" name="geCheckbox" value="GE" type="checkbox" onclick="toogleBase('GE')" checked="checked">
+        </div>
+
+        <div>
+        <input id="geCheckbox" name="geCheckbox" value="GE" type="checkbox" onclick="toogleBase('GE')">
         <label for="geCheckbox">GE</label>
-        <input id="onloadCheckbox" name="onloadCheckbox" value="SERVER" type="checkbox" onclick="load()">
-        <label for="onloadCheckbox">SERVER</label>
+        </div>     
+        
+
       </div>
+      
       <div id="map"></div>
+      
       <script src="assets/jquery-3.2.1.min.js"></script>
       <script src="assets/interventionTime.js"></script>
+      <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+      <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
+      
       <script async defer
           src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBA10hCAMKhgQfiV66HILd0cARMnQ8tPaw&libraries=visualization&callback=initMap">
       </script>
