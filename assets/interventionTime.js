@@ -52,6 +52,22 @@ var filesName=[
   'mapZw.txt',
   'mapGe.txt'];
 
+var textFilter=[
+  'tiFilter',
+  'beFilter',
+  'bsFilter',
+  'lsFilter',
+  'grFilter',
+  'sgFilter',
+  'urFilter',
+  'enFilter',
+  'boFilter',
+  'moFilter',
+  'zhFilter',
+  'zwFilter',
+  'geFilter'
+];
+
 var markersBase=[];
 
 var markersCollection=[];
@@ -71,8 +87,28 @@ function initMap() {
   for(var i=0;i<filesName.length;i++){
     loadMarker(i);
   }
+  
+  map.addListener('zoom_changed', function() {
+    var zoom = map.getZoom();
+   // console.log("Zoom Level : " + zoom);
+    if(zoom>=10){
+      increaseMarkers();
+    }else{
+      decreaseMarkers();
+    }
+  });
   loadUIInit();
  }
+
+function increaseMarkers(){
+  var val = $("#time-slider").slider("option", "value");
+  refreshDataSets(val);
+}
+
+function decreaseMarkers(){
+  var val = $("#time-slider").slider("option", "value");
+  refreshDataSets(val);
+}
 
 function loadUIInit(){
   $(function() {
@@ -83,25 +119,44 @@ function loadUIInit(){
       $("#time-slider").slider({
           orientation: "horizontal",
           min: 0,
-          max: 20,
+          max: 30,
           step: 1,
           value: 0,
           slide: function(event, ui) {
             $("#time-label").html("Time: " + ui.value + " min");
-            changeTimeWindow(ui.value);
+            refreshDataSets(ui.value);
           }
       });
     });
+
+  $(function(){
+    $("input[type=number]").bind('change', function(){
+      var id = $(this).attr("id");
+      var val = $(this).val();
+//      console.log("AttrID : " + id);
+//      console.log("Index of :" + markersBase[textFilter.indexOf(id)]);
+      if(val<=30){
+        if(markersBase[textFilter.indexOf(id)].getVisible()){
+          var val = $("#time-slider").slider("option", "value");
+          refreshDataSets(val);
+        }
+      }else{
+        alert("Max filter 30 min");
+        $(this).val(30);
+      }
+    });
+  });
 }
 
 // Build base markers
 function loadMarker(index){
   var basename = title[index];
+  var icon = 'img/map-marker-2-24.png';
   var marker = new google.maps.Marker({
     position: locations[index],
 		map: map,
 		title: basename,
-    label: basename
+    icon: icon
 	 });
   marker.setVisible(false);
 	markersBase.push(marker);
@@ -126,11 +181,6 @@ function toogleBase(title){
 
 function isNumber(obj) { return !isNaN(parseFloat(obj)); } 
 
-// Change intervention time frame
-function changeTimeWindow(val){
-  refreshDataSets(val);    
-}
-
 function clearMarkersCollection(){
  // console.log("Before clear marker collection - Size : " + markersCollection[index].length);
   for (var i = 0; i < markersCollection.length; i++) {
@@ -146,9 +196,12 @@ function clearMarkersCollection(){
 function refreshDataSets(timeWindow){
   clearMarkersCollection();
   for(var i=0;i<filesName.length;i++){
-    var mapName = 'maps/'+timeWindow+filesName[i];
-    if(markersBase[i].getVisible()){
-      readData(mapName,i);      
+    var filter = document.getElementById(textFilter[i]).value;
+    var offset = timeWindow-filter;
+    if(offset>=0 && offset<=20 && markersBase[i].getVisible()){
+     // console.log("Filter " + textFilter[i] + " : "+ filter);
+      var mapName = 'maps/'+offset+filesName[i];
+      readData(mapName,i);   
     }
   }
 }
@@ -173,10 +226,18 @@ function processPoints(line,index){
     var val = point[2];
    if(isNumber(lat) && isNumber(lng) && isNumber(val)){
       var latLng = new google.maps.LatLng(lat,lng);
-      var icon = 'img/'+getIcon(index);
+      var icon = 'img/';
+      var zoom = map.getZoom();
+      if(zoom>=11){
+        icon+="16_"+ getIcon(index);
+      }else if(zoom<11 && zoom>=10){
+        icon+="8_"+getIcon(index);
+      }else{
+        icon+=getIcon(index);
+      }
       var marker = new google.maps.Marker({
         position: latLng,
-        opacity: 0.5,
+        opacity: 0.6,
         map: map,
         icon: icon
       });
