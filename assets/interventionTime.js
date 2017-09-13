@@ -72,7 +72,7 @@ var markersBase=[];
 
 var markersCollection=[];
 
-//Initialize map
+//Initialize map - Call from GMaps script
 function initMap() {
   var mapOpt = {
     zoom: zoomLevel,
@@ -91,25 +91,27 @@ function initMap() {
   map.addListener('zoom_changed', function() {
     var zoom = map.getZoom();
    // console.log("Zoom Level : " + zoom);
-    if(zoom>=10){
-      increaseMarkers();
-    }else{
-      decreaseMarkers();
+    var val = $("#time-slider").slider("option", "value");
+    if(val>0){
+      if(zoom>=10){
+        increaseMarkers(val);
+      }else{
+        decreaseMarkers(val);
+      }
     }
   });
   loadUIInit();
  }
 
-function increaseMarkers(){
-  var val = $("#time-slider").slider("option", "value");
-  refreshDataSets(val);
+function increaseMarkers(value){
+  refreshDataSets(value);
 }
 
-function decreaseMarkers(){
-  var val = $("#time-slider").slider("option", "value");
-  refreshDataSets(val);
+function decreaseMarkers(value){
+  refreshDataSets(value);
 }
 
+// Create anon function to setup input controls
 function loadUIInit(){
   $(function() {
       $( "#floating-panel" ).draggable();
@@ -119,12 +121,15 @@ function loadUIInit(){
       $("#time-slider").slider({
           orientation: "horizontal",
           min: 0,
-          max: 30,
+          max: 60,
           step: 1,
           value: 0,
           slide: function(event, ui) {
-            $("#time-label").html("Time: " + ui.value + " min");
-            refreshDataSets(ui.value);
+            var value = ui.value;
+            $("#time-label").html("Time: " + value + " min");
+            if(value>0){
+              refreshDataSets(value);             
+            }
           }
       });
     });
@@ -132,13 +137,14 @@ function loadUIInit(){
   $(function(){
     $("input[type=number]").bind('change', function(){
       var id = $(this).attr("id");
+      var index = textFilter.indexOf(id);
       var val = $(this).val();
-//      console.log("AttrID : " + id);
-//      console.log("Index of :" + markersBase[textFilter.indexOf(id)]);
       if(val<=30){
-        if(markersBase[textFilter.indexOf(id)].getVisible()){
-          var val = $("#time-slider").slider("option", "value");
-          refreshDataSets(val);
+        if(markersBase[index].getVisible()){
+          var timeWindow = $("#time-slider").slider("option", "value");
+          if(timeWindow>0){
+            refreshDataSets(timeWindow);
+          }
         }
       }else{
         alert("Max filter 30 min");
@@ -176,20 +182,22 @@ function toogleBase(title){
   }
   var val = $("#time-slider").slider("option", "value");
   //console.log("Value Slider UI : " + val);
-  refreshDataSets(val);
+  if(val>0){
+    refreshDataSets(val);
+  }
 }
 
+// Validate lat, lng, time
 function isNumber(obj) { return !isNaN(parseFloat(obj)); } 
 
+// Remove markers before update collection
 function clearMarkersCollection(){
- // console.log("Before clear marker collection - Size : " + markersCollection[index].length);
   for (var i = 0; i < markersCollection.length; i++) {
     markersCollection[i].setMap(null);
     markersCollection[i]=null;
   }
   markersCollection.length=0;
   markersCollection=[];
-//  console.log("After clear marker collection - Size : " + markersCollection[index].length);
 }
 
 // Refresh DataSets - Slider event
@@ -198,7 +206,7 @@ function refreshDataSets(timeWindow){
   for(var i=0;i<filesName.length;i++){
     var filter = document.getElementById(textFilter[i]).value;
     var offset = timeWindow-filter;
-    if(offset>=0 && offset<=20 && markersBase[i].getVisible()){
+    if(offset>=0 && offset<=28 && markersBase[i].getVisible()){
      // console.log("Filter " + textFilter[i] + " : "+ filter);
       var mapName = 'maps/'+offset+filesName[i];
       readData(mapName,i);   
@@ -207,12 +215,26 @@ function refreshDataSets(timeWindow){
 }
 
 function getIcon(val){ 
-  var ind=val%13;
-  var icon='mark';
+  var ind = val%13;
+  var zoom = map.getZoom();
+  var icon = '';
+  var prefix = '';
+  if(zoom>=11){
+    prefix="16_";
+  }else if(zoom<11 && zoom>=10){
+    prefix="8_";
+  }else if(zoom<8 && zoom>=6){
+    prefix="2_";
+  }else if(zoom<6){
+    prefix="1_";
+  }else{
+    prefix="";
+  }
+
   if(ind==0){
-    icon+='.png';
+    icon=prefix+'mark.png';
   }else {
-    icon+=ind+'.png';
+    icon=prefix+'mark'+ind+'.png';
   }
   return icon;
 }
@@ -226,18 +248,10 @@ function processPoints(line,index){
     var val = point[2];
    if(isNumber(lat) && isNumber(lng) && isNumber(val)){
       var latLng = new google.maps.LatLng(lat,lng);
-      var icon = 'img/';
-      var zoom = map.getZoom();
-      if(zoom>=11){
-        icon+="16_"+ getIcon(index);
-      }else if(zoom<11 && zoom>=10){
-        icon+="8_"+getIcon(index);
-      }else{
-        icon+=getIcon(index);
-      }
+      var icon = 'img/'+getIcon(index);
       var marker = new google.maps.Marker({
         position: latLng,
-        opacity: 0.6,
+        opacity: 0.5,
         map: map,
         icon: icon
       });
@@ -248,26 +262,26 @@ function processPoints(line,index){
 
 // Read data from server async
 function readData(filePath,index){
-      var xmlhttp = new XMLHttpRequest();
-      xmlhttp.open("GET", filePath, true);
+  var xmlhttp = new XMLHttpRequest();
+  xmlhttp.open("GET", filePath, true);
       //console.log("MapName : " + filePath);
-      xmlhttp.onload = function (e) {
+      xmlhttp.onreadystatechange = function (e) {
         if (xmlhttp.readyState === 4) {
           if (xmlhttp.status === 200) {
             var response = xmlhttp.responseText;
             var responseLines = response.split('\n');
             for(var i=0;i<responseLines.length;i++){
              processPoints(responseLines[i],index);         
-            }
-          } else {
-            console.error(xmlhttp.statusText);
-          }
+           }
+         } else {
+          console.error(xmlhttp.statusText);
         }
-      };
-      xmlhttp.onerror = function (e) {
-        console.error(xmlhttp.statusText);
-      };
-      xmlhttp.send(null);
+      }
+    };
+    xmlhttp.onerror = function (e) {
+      console.error(xmlhttp.statusText);
+    };
+    xmlhttp.send(null);
 }
 
 //Random function to generate points around a center coordinate

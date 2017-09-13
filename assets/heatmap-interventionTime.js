@@ -108,12 +108,14 @@ function loadUIInit(){
     $("#time-slider").slider({
       orientation: "horizontal",
       min: 0,
-      max: 20,
+      max: 30,
       step: 1,
       value: 0,
       slide: function(event, ui) {
         $("#time-label").html("Time: " + ui.value + " min");
-        refreshDataSets(ui.value);
+        if(ui.value>0){
+          refreshDataSets(ui.value);          
+        }
       }
     });
   });
@@ -147,7 +149,9 @@ function toogleBase(title){
   }
   var val = $("#time-slider").slider("option", "value");
   //console.log("Value Slider UI : " + val);
-  refreshDataSets(val);
+  if(val>0){
+    refreshDataSets(val);
+  }
 }
 
 function isNumber(obj) { return !isNaN(parseFloat(obj)); } 
@@ -169,55 +173,57 @@ function refreshDataSets(timeWindow){
   clearMarkersCollection();
   if(timeWindow>0){
     for(var i=0;i<filesName.length;i++){
-      for (var j=1;j<=timeWindow; j++) {
-        var mapName = 'maps/'+j+filesName[i];
+      //for (var j=1;j<timeWindow; j++) {
+        var mapName = 'maps/'+ filesName[i];
         if(markersBase[i].getVisible()){
-          readData(mapName);      
+          readData(mapName,timeWindow);
         }
-      }
+      //}
     }
   }
 }
 
 // Process each line of file
-function processPoints(line){
+function processPoints(line,timeWindow){
   var point = line.split(',');
   if(point.length==3){
     var lat = point[0];
     var lng = point[1];
     var val = point[2];
     if(isNumber(lat) && isNumber(lng) && isNumber(val)){
-      var latLng = new google.maps.LatLng(lat,lng);
-      //var weight = Math.exp(val);
-      var weight = val*60;
-      var weightedLocation = {location: latLng, weight: weight};
-      markersCollection.push(weightedLocation);
+      if(val<timeWindow){
+        var latLng = new google.maps.LatLng(lat,lng);
+        //var weight = Math.exp(val);
+        var weight = val*60;
+        var weightedLocation = {location: latLng, weight: weight};
+        markersCollection.push(weightedLocation);        
+      }
     } 
   }
 }
 
 // Read data from server async
-function readData(filePath){
+function readData(filePath,timeWindow){
   var xmlhttp = new XMLHttpRequest();
   xmlhttp.open("GET", filePath, true);
       //console.log("MapName : " + filePath);
-      xmlhttp.onload = function (e) {
-        if (xmlhttp.readyState === 4) {
-          if (xmlhttp.status === 200) {
-            var response = xmlhttp.responseText;
-            var responseLines = response.split('\n');
-            for(var i=0;i<responseLines.length;i++){
-             processPoints(responseLines[i]);         
-            }
-            heatmap.setData(markersCollection);
-          } else {
-          console.error(xmlhttp.statusText);
-          }
+  xmlhttp.onreadystatechange = function (e) {
+    if (xmlhttp.readyState === 4) {
+      if (xmlhttp.status === 200) {
+        var response = xmlhttp.responseText;
+        var responseLines = response.split('\n');
+        for(var i=0;i<responseLines.length;i++){
+          processPoints(responseLines[i],timeWindow);         
         }
-    };
-    xmlhttp.onerror = function (e) {
-      console.error(xmlhttp.statusText);
-    };
-    xmlhttp.send(null);
-  }
+        heatmap.setData(markersCollection);
+      } else {
+        console.error(xmlhttp.statusText);
+      }
+    }
+  };
+  xmlhttp.onerror = function (e) {
+    console.error(xmlhttp.statusText);
+  };
+  xmlhttp.send(null);
+}
 
