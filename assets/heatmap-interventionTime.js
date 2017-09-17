@@ -12,45 +12,61 @@ var urLatLng = {lat: 46.834167, lng: 8.638324};
 var enLatLng = {lat: 46.530556, lng: 9.878333};
 var boLatLng = {lat: 46.670000, lng: 7.876111};
 var moLatLng = {lat: 47.078056, lng: 9.066111};
-var zwLatLng = {lat: 46.555278, lng: 7.379722};
+var zwLatLng = {lat: 46.554736, lng: 7.378989};
 var zhLatLng = {lat: 47.395948, lng: 8.637851};
 var geLatLng = {lat: 46.233611, lng: 6.096944};
 
-var centerCoord = {lat: 46.823314, lng: 8.528663};
+var centerCoord = {lat: 46.823314, lng: 8.229163};
 var zoomLevel = 8;
 var mapType = "terrain";
 
 var title=['TI','BE','BS','LS','GR','SG','UR','EN','BO','MO','ZH','ZW','GE'];
 
 var locations=[
-tiLatLng,
-beLatLng,
-bsLatLng,
-lsLatLng,
-grLatLng,
-sgLatLng,
-urLatLng,
-enLatLng,
-boLatLng,
-moLatLng,
-zhLatLng,
-zwLatLng,
-geLatLng];
+    tiLatLng,
+    beLatLng,
+    bsLatLng,
+    lsLatLng,
+    grLatLng,
+    sgLatLng,
+    urLatLng,
+    enLatLng,
+    boLatLng,
+    moLatLng,
+    zhLatLng,
+    zwLatLng,
+    geLatLng];
 
 var filesName=[
-'mapTi.txt',
-'mapBe.txt',
-'mapBs.txt',
-'mapLs.txt',
-'mapGr.txt',
-'mapSg.txt',
-'mapUr.txt',
-'mapEn.txt',
-'mapBo.txt',
-'mapMo.txt',
-'mapZh.txt',
-'mapZw.txt',
-'mapGe.txt'];
+  'mapTi.txt',
+  'mapBe.txt',
+  'mapBs.txt',
+  'mapLs.txt',
+  'mapGr.txt',
+  'mapSg.txt',
+  'mapUr.txt',
+  'mapEn.txt',
+  'mapBo.txt',
+  'mapMo.txt',
+  'mapZh.txt',
+  'mapZw.txt',
+  'mapGe.txt'];
+
+var textFilter=[
+  'tiFilter',
+  'beFilter',
+  'bsFilter',
+  'lsFilter',
+  'grFilter',
+  'sgFilter',
+  'urFilter',
+  'enFilter',
+  'boFilter',
+  'moFilter',
+  'zhFilter',
+  'zwFilter',
+  'geFilter'
+];
 
 var markersBase=[];
 
@@ -95,8 +111,21 @@ function initMap() {
       heatmap.set('radius',1);
     }
   });
-
+  
   loadUIInit();
+  loadKML();
+}
+
+// Load Swiss KML File layer
+function loadKML(){
+  var swissLayer = new google.maps.KmlLayer({
+          url: 'http://ec2-54-203-139-105.us-west-2.compute.amazonaws.com/interventionTime/maps/swissLayer-kml.kml',
+          map: map,
+          clickable: false,
+          screenOverlays: false,
+          suppressInfoWindows: true,
+          zIndex: 0
+        });
 }
 
 function loadUIInit(){
@@ -119,6 +148,38 @@ function loadUIInit(){
       }
     });
   });
+
+  $(function(){
+    $("input[type=number]").bind('change', function(){
+      var val = $(this).val();
+      if(val<=30 && val>=0){
+        var id = $(this).attr("id");
+        var index = textFilter.indexOf(id);
+        if(markersBase[index].getVisible()){
+          var timeWindow = $("#time-slider").slider("option", "value");
+          if(timeWindow>=0){
+            refreshDataSets(timeWindow);
+          }
+        }
+      }else{
+        $(this).val(15);
+        $("<div><p>Min 0 - Max 30 min</p></div>").dialog({
+              classes: {
+                "ui-dialog": "ui-state-error ui-corner-all",
+                "ui-dialog-content": "ui-state-error"
+              },
+              title: "Alert",
+              height: "auto",
+              width: "auto",
+              close: function (event, ui) { $(this).remove(); },
+              modal: true,
+              draggable: false,
+              resizable: false
+        });
+      }
+    });
+    $("input[type=number]").addClass("ui-corner-all");
+  });
 }
 
 // Build base markers
@@ -131,7 +192,6 @@ function loadMarker(index){
     title: basename,
     icon: icon
   });
-  marker.setVisible(false);
   markersBase.push(marker);
 }
 
@@ -171,14 +231,12 @@ function clearMarkersCollection(){
 // Refresh DataSets - Slider event
 function refreshDataSets(timeWindow){
   clearMarkersCollection();
-  if(timeWindow>0){
+  if(timeWindow>=0){
     for(var i=0;i<filesName.length;i++){
-      //for (var j=1;j<timeWindow; j++) {
-        var mapName = 'maps/'+ filesName[i];
-        if(markersBase[i].getVisible()){
-          readData(mapName,timeWindow);
-        }
-      //}
+      var mapName = 'maps/'+ filesName[i];
+      if(markersBase[i].getVisible()){
+        readData(mapName,timeWindow);
+      }
     }
   }
 }
@@ -191,7 +249,7 @@ function processPoints(line,timeWindow){
     var lng = point[1];
     var val = point[2];
     if(isNumber(lat) && isNumber(lng) && isNumber(val)){
-      if(val<timeWindow){
+      if(val<=timeWindow){
         var latLng = new google.maps.LatLng(lat,lng);
         //var weight = Math.exp(val);
         var weight = val*60;

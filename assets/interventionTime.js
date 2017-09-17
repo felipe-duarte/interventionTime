@@ -12,11 +12,11 @@ var urLatLng = {lat: 46.834167, lng: 8.638324};
 var enLatLng = {lat: 46.530556, lng: 9.878333};
 var boLatLng = {lat: 46.670000, lng: 7.876111};
 var moLatLng = {lat: 47.078056, lng: 9.066111};
-var zwLatLng = {lat: 46.555278, lng: 7.379722};
+var zwLatLng = {lat: 46.554736, lng: 7.378989};
 var zhLatLng = {lat: 47.395948, lng: 8.637851};
 var geLatLng = {lat: 46.233611, lng: 6.096944};
 
-var centerCoord = {lat: 46.823314, lng: 8.528663};
+var centerCoord = {lat: 46.823314, lng: 8.229163};
 var zoomLevel = 8;
 var mapType = "terrain";
 
@@ -74,84 +74,120 @@ var markersCollection=[];
 
 //Initialize map - Call from GMaps script
 function initMap() {
+  
   var mapOpt = {
     zoom: zoomLevel,
     center: centerCoord,
     mapTypeControl: true,
     mapTypeControlOptions: {
-            mapTypeIds: ['roadmap', 'satellite', 'hybrid', 'terrain']
-          },
+      mapTypeIds: ['roadmap', 'satellite', 'hybrid', 'terrain']
+    },
     mapTypeId: mapType
   };
+  
   map = new google.maps.Map(document.getElementById('map'),mapOpt);
+ 
+  markersCollection = new Array(13);
   for(var i=0;i<filesName.length;i++){
     loadMarker(i);
+    markersCollection[i] = [];
   }
+ 
   
   map.addListener('zoom_changed', function() {
-    var zoom = map.getZoom();
-   // console.log("Zoom Level : " + zoom);
     var val = $("#time-slider").slider("option", "value");
-    if(val>0){
-      if(zoom>=10){
-        increaseMarkers(val);
-      }else{
-        decreaseMarkers(val);
-      }
+    //console.log("Zoom level " + map.getZoom());
+    if(val>=0){
+     refreshDataSets();
+     refreshBaseMarkers();
     }
   });
+  loadKML();
   loadUIInit();
  }
 
-function increaseMarkers(value){
-  refreshDataSets(value);
-}
-
-function decreaseMarkers(value){
-  refreshDataSets(value);
+// Load KML Swiss Layer
+function loadKML(){
+   var swissLayer = new google.maps.KmlLayer({
+          url: 'http://ec2-54-203-139-105.us-west-2.compute.amazonaws.com/interventionTime/maps/swissLayer-kml.kml',
+          map: map,
+          clickable: false,
+          screenOverlays: false,
+          suppressInfoWindows: true,
+          zIndex: 0
+        });
 }
 
 // Create anon function to setup input controls
 function loadUIInit(){
   $(function() {
-      $( "#floating-panel" ).draggable();
+      $("#floating-panel").draggable();
+      $("#floating-panel").addClass("ui-corner-all");
     });
 
   $(function() {
       $("#time-slider").slider({
           orientation: "horizontal",
+          range: "min",
           min: 0,
           max: 60,
           step: 1,
-          value: 0,
+          value: 15,
           slide: function(event, ui) {
             var value = ui.value;
             $("#time-label").html("Time: " + value + " min");
-            if(value>0){
-              refreshDataSets(value);             
-            }
+            $("#time-box").val(value);
+            $("#time-box").change();
           }
       });
     });
 
   $(function(){
     $("input[type=number]").bind('change', function(){
-      var id = $(this).attr("id");
-      var index = textFilter.indexOf(id);
-      var val = $(this).val();
-      if(val<=30){
-        if(markersBase[index].getVisible()){
-          var timeWindow = $("#time-slider").slider("option", "value");
-          if(timeWindow>0){
-            refreshDataSets(timeWindow);
+      var attrID = $(this).attr('id');
+      var val = Number($(this).val());
+      var min = Number($(this).attr('min'));
+      var max = Number($(this).attr('max'));
+      if(validateInput(val,max,min)){
+        if(attrID.indexOf("time")!==-1){
+          $("#time-slider").slider('value',val);
+          $("#time-label").html("Time: " + val + " min");
+          refreshDataSets();
+          return;
+        }else{
+          var index = textFilter.indexOf(attrID);
+          if(markersBase[index].getVisible()){
+            refreshDataSets();
           }
         }
       }else{
-        alert("Max filter 30 min");
-        $(this).val(30);
+        $(this).val(15);
+        $(this).change();
       }
     });
-  });
+    $("input[type=number]").addClass("ui-corner-all");
+  });  
+}
+
+function validateInput(value,max,min){
+  if(value<=max && value>=min){
+    return true;
+  }else{
+    $("<div><p>Min "+ min +" - Max "+ max +" min</p></div>").dialog({
+              classes: {
+                "ui-dialog": "ui-state-error ui-corner-all",
+                "ui-dialog-content": "ui-state-error"
+              },
+              title: "Alert",
+              height: "auto",
+              width: "auto",
+              close: function (event, ui) { $(this).remove(); },
+              modal: true,
+              draggable: false,
+              resizable: false
+        });
+    return false;
+  }
 }
 
 // Build base markers
@@ -164,8 +200,23 @@ function loadMarker(index){
 		title: basename,
     icon: icon
 	 });
-  marker.setVisible(false);
-	markersBase.push(marker);
+ 	markersBase.push(marker);
+}
+
+// Refresh icon at zoom level
+function refreshBaseMarkers(){
+  var zoom = map.getZoom();
+   for (var i = 0; i < markersBase.length; i++) {
+      if(zoom>=7 && zoom<=10){
+        markersBase[i].setIcon("img/map-marker-2-24.png");
+      }else if(zoom>=5 && zoom<7){
+        markersBase[i].setIcon("img/map-marker-2-16.png");
+      }else if(zoom<=4){
+        markersBase[i].setIcon("img/map-marker-2-8.png");
+      }else{
+        markersBase[i].setIcon("img/map-marker-2-32.png");
+      }
+    }
 }
 
 //Toogle base markers and respective markersCollection
@@ -180,11 +231,7 @@ function toogleBase(title){
     	}
 	  }
   }
-  var val = $("#time-slider").slider("option", "value");
-  //console.log("Value Slider UI : " + val);
-  if(val>0){
-    refreshDataSets(val);
-  }
+  refreshDataSets();
 }
 
 // Validate lat, lng, time
@@ -193,32 +240,50 @@ function isNumber(obj) { return !isNaN(parseFloat(obj)); }
 // Remove markers before update collection
 function clearMarkersCollection(){
   for (var i = 0; i < markersCollection.length; i++) {
-    markersCollection[i].setMap(null);
-    markersCollection[i]=null;
+   for (var j = 0; j < markersCollection[i].length; j++) {
+      if(typeof markersCollection[i][j]!="undefined"){
+        markersCollection[i][j].setMap(null);    
+      }
+    }
+    markersCollection[i].length=0;
+    markersCollection[i]=[];
   }
-  markersCollection.length=0;
-  markersCollection=[];
 }
 
 // Refresh DataSets - Slider event
-function refreshDataSets(timeWindow){
+function refreshDataSets(){
   clearMarkersCollection();
+  var val = $("#time-slider").slider("option", "value");
   for(var i=0;i<filesName.length;i++){
-    var filter = document.getElementById(textFilter[i]).value;
-    var offset = timeWindow-filter;
-    if(offset>=0 && offset<=28 && markersBase[i].getVisible()){
-     // console.log("Filter " + textFilter[i] + " : "+ filter);
-      var mapName = 'maps/'+offset+filesName[i];
-      readData(mapName,i);   
+    if(markersBase[i].getVisible()){
+      var filter = document.getElementById(textFilter[i]).value;
+      var offset = Math.trunc(val-filter);
+      if(offset>=0 && offset<=29){
+       // console.log("Filter " + textFilter[i] + " : "+ filter);
+        var mapName = 'maps/'+offset+filesName[i];
+        readData(mapName,i);   
+      }
     }
   }
 }
 
-function getIcon(val){ 
-  var ind = val%13;
+// Marker Icon based on index mod
+function getIcon(index){ 
+  var ind = index%13;
+  var icon = "";
+  var prefix = getPrefix();
+  if(ind==0){
+    icon=prefix+'mark.png';
+  }else {
+    icon=prefix+'mark'+ind+'.png';
+  }
+  return icon;
+}
+
+// Prefix of marker based on zoom level (1,2,8,16 - Default 4px without prefix)
+function getPrefix(){
+  var prefix="";
   var zoom = map.getZoom();
-  var icon = '';
-  var prefix = '';
   if(zoom>=11){
     prefix="16_";
   }else if(zoom<11 && zoom>=10){
@@ -227,16 +292,8 @@ function getIcon(val){
     prefix="2_";
   }else if(zoom<6){
     prefix="1_";
-  }else{
-    prefix="";
   }
-
-  if(ind==0){
-    icon=prefix+'mark.png';
-  }else {
-    icon=prefix+'mark'+ind+'.png';
-  }
-  return icon;
+  return prefix;
 }
 
 // Process each line of file
@@ -249,14 +306,24 @@ function processPoints(line,index){
    if(isNumber(lat) && isNumber(lng) && isNumber(val)){
       var latLng = new google.maps.LatLng(lat,lng);
       var icon = 'img/'+getIcon(index);
+      var minutes = Number(val)+1;
       var marker = new google.maps.Marker({
         position: latLng,
         opacity: 0.5,
         map: map,
-        icon: icon
+        icon: icon,
+        title: title[index] + " - " + minutes + " min"
       });
-      markersCollection.push(marker);
+      markersCollection[index].push(marker);
     } 
+  }
+}
+
+// Process file response
+function processResponse(response,index){
+  var responseLines = response.split('\n');
+  for(var i=0;i<responseLines.length;i++){
+    processPoints(responseLines[i],index);         
   }
 }
 
@@ -264,24 +331,20 @@ function processPoints(line,index){
 function readData(filePath,index){
   var xmlhttp = new XMLHttpRequest();
   xmlhttp.open("GET", filePath, true);
-      //console.log("MapName : " + filePath);
-      xmlhttp.onreadystatechange = function (e) {
-        if (xmlhttp.readyState === 4) {
-          if (xmlhttp.status === 200) {
-            var response = xmlhttp.responseText;
-            var responseLines = response.split('\n');
-            for(var i=0;i<responseLines.length;i++){
-             processPoints(responseLines[i],index);         
-           }
-         } else {
-          console.error(xmlhttp.statusText);
-        }
+  xmlhttp.onreadystatechange = function (e) {
+    if (xmlhttp.readyState === 4) {
+      if (xmlhttp.status === 200) {
+        var response = xmlhttp.responseText;
+        processResponse(response,index);
+      } else {
+        console.error(xmlhttp.statusText);
       }
-    };
-    xmlhttp.onerror = function (e) {
-      console.error(xmlhttp.statusText);
-    };
-    xmlhttp.send(null);
+    }
+  };
+  xmlhttp.onerror = function (e) {
+    console.error(xmlhttp.statusText);
+  };
+  xmlhttp.send(null);
 }
 
 //Random function to generate points around a center coordinate

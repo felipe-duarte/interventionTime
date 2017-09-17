@@ -2,7 +2,10 @@
   <html>
     <head>
       <meta charset="utf-8">
-      <title>Intervention Time</title>
+      <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+      <meta http-equiv="Pragma" content="no-cache" />
+      <meta http-equiv="Expires" content="0" />
+      <title>Intervention Time - Heatmaps</title>
       <style>
         /* Always set the map height explicitly to define the size of the div
          * element that contains the map. */
@@ -19,14 +22,14 @@
         
         #floating-panel {
           z-index:100; 
-          background-color: rgba(200,200,200,.6); 
+          background-color: rgba(210,210,210,.5); 
           padding: 10px;
           position:absolute;
           top:70px;
           left:10px;
           cursor: move;
           border: black 1px solid;
-          font-family: 'Raleway', sans-serif;
+          font-family: "Helvetica", "Arial" , sans-serif;
           font-weight: bold;
         }
 
@@ -36,12 +39,30 @@
         }
 
         #time-slider{
-          width:120px;
+          width: 180px;
           margin: 5px;
+          color: #CCCCCC;
+          cursor:pointer;
         }
 
-        #time-slider .ui-slider-handle{
-          cursor:pointer;
+        #time-slider .ui-slider-range { background: #ef2929; }
+
+        #table-base{
+          width: 100%;
+          padding: 0px;
+          margin: 0px;
+          align-content: center;
+          border-collapse: collapse;
+        }
+
+        #table-base tr{
+          border-top: 1px solid rgba(210,210,210,.5);
+          padding: 0px;
+          margin: 0px;
+        }
+
+        input[type="number"] {
+          width: 35px;
         }
 
       </style>
@@ -50,78 +71,153 @@
     <body>
       <div id="floating-panel">
         
-       <div id="time-label"> Time: 0</div>
+        <div id="time-label"> Time: 0 min</div>
         <div id="time-slider"></div>
+        
+        <div>
+          <hr>
+        </div>
+        
+        <div>
+        <table id="table-base">
+
+        <div>
+        <tr><td>
+        <input id="zhCheckbox" name="zhCheckbox" value="ZH" type="checkbox" checked="true" onclick="toogleBase('ZH')">
+        <label for="zhCheckbox">ZH</label>
+        </td>
+        <td>
+        <input id="zhFilter" type="number" name="zhFilter" min="0" max="30" value="15" step="1">
+        </td></tr>
+        </div>
+
+        <div>
+        <tr><td>
+        <input id="bsCheckbox" name="bsCheckbox" value="BS" type="checkbox" checked="true" onclick="toogleBase('BS')">
+        <label for="bsCheckbox">BS</label>
+        </td>
+        <td>
+        <input id="bsFilter" type="number" name="bsFilter" min="0" max="30" value="15" step="1">
+        </td></tr>
+        </div>
+
+        <div>
+        <tr><td>
+        <input id="beCheckbox" name="beCheckbox" value="BE" type="checkbox" checked="true" onclick="toogleBase('BE')">
+        <label for="beCheckbox">BE</label>
+        </td>
+        <td>
+        <input id="beFilter" type="number" name="beFilter" min="0" max="30" value="15" step="1">
+        </td></tr>
+        </div>
+
+        <div>
+        <tr><td>
+        <input id="lsCheckbox" name="lsCheckbox" value="LS" type="checkbox" checked="true" onclick="toogleBase('LS')">
+        <label for="lsCheckbox">LS</label>
+        </td>
+        <td>
+        <input id="lsFilter" type="number" name="lsFilter" min="0" max="30" value="15" step="1">
+        </td></tr>
+        </div>
+
+        <div>
+        <tr><td>
+        <input id="grCheckbox" name="grCheckbox" value="GR" type="checkbox" checked="true" onclick="toogleBase('GR')">
+        <label for="grCheckbox">GR</label>
+        </td>
+        <td>
+        <input id="grFilter" type="number" name="grFilter" min="0" max="30" value="15" step="1">
+        </td></tr>
+        </div>
+
+        <div>
+        <tr><td>
+        <input id="tiCheckbox" name="tiCheckbox" value="TI" type="checkbox" checked="true" onclick="toogleBase('TI')">
+        <label for="tiCheckbox">TI</label>
+        </td>
+        <td>
+        <input id="tiFilter" type="number" name="tiFilter" min="0" max="30" value="15" step="1">
+        </td></tr>
+        </div>
+
+        <div>
+        <tr><td>
+        <input id="sgCheckbox" name="sgCheckbox" value="SG" type="checkbox" checked="true" onclick="toogleBase('SG')">
+        <label for="sgCheckbox">SG</label>
+        </td>
+        <td>
+        <input id="sgFilter" type="number" name="sgFilter" min="0" max="30" value="15" step="1">
+        </td></tr>
+        </div>
+
+        <div>
+        <tr><td>
+        <input id="urCheckbox" name="urCheckbox" value="UR" type="checkbox" checked="true" onclick="toogleBase('UR')">
+        <label for="urCheckbox">UR</label>
+        </td>
+        <td>
+        <input id="urFilter" type="number" name="urFilter" min="0" max="30" value="15" step="1">
+        </td></tr>
+        </div>
+
+        <div>
+        <tr><td>
+        <input id="enCheckbox" name="enCheckbox" value="EN" type="checkbox" checked="true" onclick="toogleBase('EN')">
+        <label for="enCheckbox">EN</label>
+        </td>
+        <td>
+        <input id="enFilter" type="number" name="enFilter" min="0" max="30" value="15" step="1">
+        </td></tr>
+        </div>
+
+        <div>
+        <tr><td>
+        <input id="boCheckbox" name="boCheckbox" value="BO" type="checkbox" checked="true" onclick="toogleBase('BO')">
+        <label for="boCheckbox">BO</label>
+        </td>
+        <td>
+        <input id="boFilter" type="number" name="boFilter" min="0" max="30" value="15" step="1">
+        </td></tr>
+        </div>
+
+        <div>
+        <tr><td>
+        <input id="moCheckbox" name="moCheckbox" value="MO" type="checkbox" checked="true" onclick="toogleBase('MO')">
+        <label for="moCheckbox">MO</label>
+        </td>
+        <td>
+        <input id="moFilter" type="number" name="moFilter" min="0" max="30" value="15" step="1">
+        </td></tr>
+        </div>
+
+        <div>
+        <tr><td>
+        <input id="zwCheckbox" name="zwCheckbox" value="ZW" type="checkbox" checked="true" onclick="toogleBase('ZW')">
+        <label for="zwCheckbox">ZW</label>
+        </td>
+        <td>
+        <input id="zwFilter" type="number" name="zwFilter" min="0" max="30" value="15" step="1">
+        </td></tr>
+        </div>
+        </table>
+        </div>
 
         <div>
           <hr>
         </div>
 
         <div>
-        <input id="zhCheckbox" name="zhCheckbox" value="ZH" type="checkbox" onclick="toogleBase('ZH')">
-        <label for="zhCheckbox">ZH</label>
-        </div>
-
-        <div>
-        <input id="bsCheckbox" name="bsCheckbox" value="BS" type="checkbox" onclick="toogleBase('BS')">
-        <label for="bsCheckbox">BS</label>
-        </div>
-
-        <div>
-        <input id="beCheckbox" name="beCheckbox" value="BE" type="checkbox" onclick="toogleBase('BE')">
-        <label for="beCheckbox">BE</label>
-        </div>
-
-        <div>
-        <input id="lsCheckbox" name="lsCheckbox" value="LS" type="checkbox" onclick="toogleBase('LS')">
-        <label for="lsCheckbox">LS</label>
-        </div>
-
-        <div>
-        <input id="grCheckbox" name="grCheckbox" value="GR" type="checkbox" onclick="toogleBase('GR')">
-        <label for="grCheckbox">GR</label>
-        </div>
-
-        <div>
-        <input id="tiCheckbox" name="tiCheckbox" value="TI" type="checkbox" onclick="toogleBase('TI')">
-        <label for="tiCheckbox">TI</label>
-        </div>
-
-        <div>
-        <input id="sgCheckbox" name="sgCheckbox" value="SG" type="checkbox" onclick="toogleBase('SG')">
-        <label for="sgCheckbox">SG</label>
-        </div>
-
-        <div>
-        <input id="urCheckbox" name="urCheckbox" value="UR" type="checkbox" onclick="toogleBase('UR')">
-        <label for="urCheckbox">UR</label>
-        </div>
-
-        <div>
-        <input id="enCheckbox" name="enCheckbox" value="EN" type="checkbox" onclick="toogleBase('EN')">
-        <label for="enCheckbox">EN</label>
-        </div>
-
-        <div>
-        <input id="boCheckbox" name="boCheckbox" value="BO" type="checkbox" onclick="toogleBase('BO')">
-        <label for="boCheckbox">BO</label>
-        </div>
-
-        <div>
-        <input id="moCheckbox" name="moCheckbox" value="MO" type="checkbox" onclick="toogleBase('MO')">
-        <label for="moCheckbox">MO</label>
-        </div>
-
-        <div>
-        <input id="zwCheckbox" name="zwCheckbox" value="ZW" type="checkbox" onclick="toogleBase('ZW')">
-        <label for="zwCheckbox">ZW</label>
-        </div>
-
-        <div>
-        <input id="geCheckbox" name="geCheckbox" value="GE" type="checkbox" onclick="toogleBase('GE')">
+        <table id="table-base">
+        <tr><td>
+        <input id="geCheckbox" name="geCheckbox" value="GE" type="checkbox" checked="true" onclick="toogleBase('GE')">
         <label for="geCheckbox">GE</label>
-        </div>     
-        
+        </td>
+        <td>
+        <input id="geFilter" type="number" name="geFilter" min="0" max="30" value="15" step="1">
+        </td></tr>
+        </table>
+        </div>
 
       </div>
       
