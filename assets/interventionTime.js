@@ -20,6 +20,8 @@ var centerCoord = {lat: 46.823314, lng: 8.229163};
 var zoomLevel = 8;
 var mapType = "terrain";
 
+var iconPath = "img/map-marker-2-24.png";
+
 var title=['TI','BE','BS','LS','GR','SG','UR','EN','BO','MO','ZH','ZW','GE'];
 
 var locations=[
@@ -72,6 +74,8 @@ var markersBase=[];
 
 var markersCollection=[];
 
+var swissLayerUrl = "http://ec2-54-203-139-105.us-west-2.compute.amazonaws.com/interventionTime/maps/swissLayer-kml.kml";
+
 //Initialize map - Call from GMaps script
 function initMap() {
   
@@ -87,7 +91,7 @@ function initMap() {
   
   map = new google.maps.Map(document.getElementById('map'),mapOpt);
  
-  markersCollection = new Array(13);
+  markersCollection = new Array(filesName.length);
   for(var i=0;i<filesName.length;i++){
     loadMarker(i);
     markersCollection[i] = [];
@@ -109,7 +113,7 @@ function initMap() {
 // Load KML Swiss Layer
 function loadKML(){
    var swissLayer = new google.maps.KmlLayer({
-          url: 'http://ec2-54-203-139-105.us-west-2.compute.amazonaws.com/interventionTime/maps/swissLayer-kml.kml',
+          url: swissLayerUrl,
           map: map,
           clickable: false,
           screenOverlays: false,
@@ -143,6 +147,8 @@ function loadUIInit(){
     });
 
   $(function(){
+    $("input[type=number]").addClass("ui-corner-all");
+    
     $("input[type=number]").bind('change', function(){
       var attrID = $(this).attr('id');
       var val = Number($(this).val());
@@ -165,7 +171,6 @@ function loadUIInit(){
         $(this).change();
       }
     });
-    $("input[type=number]").addClass("ui-corner-all");
   });  
 }
 
@@ -193,13 +198,13 @@ function validateInput(value,max,min){
 // Build base markers
 function loadMarker(index){
   var basename = title[index];
-  var icon = 'img/map-marker-2-24.png';
+  var icon = iconPath;
   var marker = new google.maps.Marker({
     position: locations[index],
 		map: map,
 		title: basename,
     icon: icon
-	 });
+  });
  	markersBase.push(marker);
 }
 
@@ -226,44 +231,68 @@ function toogleBase(title){
   	if(marker.getTitle()==title){
   		if (!marker.getVisible()) {
       		marker.setVisible(true);
+          refreshDataSetsAt(i);
         } else {
   	    	marker.setVisible(false);
+          clearMarkersCollectionAt(i);
     	}
 	  }
   }
-  refreshDataSets();
+//  
 }
 
 // Validate lat, lng, time
 function isNumber(obj) { return !isNaN(parseFloat(obj)); } 
 
-// Remove markers before update collection
-function clearMarkersCollection(){
-  for (var i = 0; i < markersCollection.length; i++) {
-   for (var j = 0; j < markersCollection[i].length; j++) {
-      if(typeof markersCollection[i][j]!="undefined"){
-        markersCollection[i][j].setMap(null);    
+function isUndefined(obj) { return (typeof obj==="undefined"); }
+
+// Remove markers from map before update collection
+function clearMarkersCollectionAt(index){
+   for (var j = 0; j < markersCollection[index].length; j++) {
+      if(!isUndefined(markersCollection[index][j])){
+        markersCollection[index][j].setMap(null);    
       }
     }
-    markersCollection[i].length=0;
-    markersCollection[i]=[];
+    markersCollection[index].length=0;
+    markersCollection[index]=[];
+}
+
+// Refresh DataSets
+function refreshDataSets(){
+  var val = $("#time-slider").slider("option", "value");
+  if(val>=0){
+    for(var i=0;i<filesName.length;i++){
+      if(markersBase[i].getVisible()){
+        var filter = document.getElementById(textFilter[i]).value;
+        var offset = Math.trunc(val-filter);
+        if(offset>0 && offset<29){
+        // console.log("Filter " + textFilter[i] + " : "+ filter);
+          var mapName = 'maps/'+offset+filesName[i];
+          readData(mapName,i);   
+        }else{
+          clearMarkersCollectionAt(i);
+        }
+      }
+    }
   }
 }
 
-// Refresh DataSets - Slider event
-function refreshDataSets(){
-  clearMarkersCollection();
+function refreshDataSetsAt(index){
   var val = $("#time-slider").slider("option", "value");
-  for(var i=0;i<filesName.length;i++){
-    if(markersBase[i].getVisible()){
-      var filter = document.getElementById(textFilter[i]).value;
-      var offset = Math.trunc(val-filter);
-      if(offset>=0 && offset<=29){
-       // console.log("Filter " + textFilter[i] + " : "+ filter);
-        var mapName = 'maps/'+offset+filesName[i];
-        readData(mapName,i);   
-      }
-    }
+  if(val>=0){
+    //for(var i=0;i<filesName.length;i++){
+    //  if(markersBase[i].getVisible()){
+        var filter = document.getElementById(textFilter[index]).value;
+        var offset = Math.trunc(val-filter);
+        if(offset>=0 && offset<29){
+        // console.log("Filter " + textFilter[i] + " : "+ filter);
+          var mapName = 'maps/'+offset+filesName[index];
+          readData(mapName,index);   
+        }else{
+          clearMarkersCollectionAt(index);
+        }
+     // }
+    //}
   }
 }
 
@@ -306,13 +335,12 @@ function processPoints(line,index){
    if(isNumber(lat) && isNumber(lng) && isNumber(val)){
       var latLng = new google.maps.LatLng(lat,lng);
       var icon = 'img/'+getIcon(index);
-      var minutes = Number(val)+1;
       var marker = new google.maps.Marker({
         position: latLng,
         opacity: 0.5,
+        clickable: false,
         map: map,
-        icon: icon,
-        title: title[index] + " - " + minutes + " min"
+        icon: icon
       });
       markersCollection[index].push(marker);
     } 
@@ -321,6 +349,7 @@ function processPoints(line,index){
 
 // Process file response
 function processResponse(response,index){
+  clearMarkersCollectionAt(index);
   var responseLines = response.split('\n');
   for(var i=0;i<responseLines.length;i++){
     processPoints(responseLines[i],index);         
