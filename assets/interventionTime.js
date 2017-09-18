@@ -76,39 +76,28 @@ var markersCollection=[];
 
 var swissLayerUrl = "http://ec2-54-203-139-105.us-west-2.compute.amazonaws.com/interventionTime/maps/swissLayer-kml.kml";
 
+var changed = false;
+
 //Initialize map - Call from GMaps script
 function initMap() {
-  
-  var mapOpt = {
-    zoom: zoomLevel,
-    center: centerCoord,
-    mapTypeControl: true,
-    mapTypeControlOptions: {
-      mapTypeIds: ['roadmap', 'satellite', 'hybrid', 'terrain']
-    },
-    mapTypeId: mapType
-  };
-  
-  map = new google.maps.Map(document.getElementById('map'),mapOpt);
- 
+  map = new google.maps.Map(document.getElementById('map'),buildMapOpts());
+  map.addListener('zoom_changed', function() {
+    refreshMarkers();
+    refreshBaseMarkers();
+  });
+  initMarkersCollection();
+  loadKML();
+  loadUIInit();
+ }
+
+// Init base markers and collections
+function initMarkersCollection(){
   markersCollection = new Array(filesName.length);
   for(var i=0;i<filesName.length;i++){
     loadMarker(i);
     markersCollection[i] = [];
   }
- 
-  
-  map.addListener('zoom_changed', function() {
-    var val = $("#time-slider").slider("option", "value");
-    //console.log("Zoom level " + map.getZoom());
-    if(val>=0){
-     refreshDataSets();
-     refreshBaseMarkers();
-    }
-  });
-  loadKML();
-  loadUIInit();
- }
+}
 
 // Load KML Swiss Layer
 function loadKML(){
@@ -122,12 +111,28 @@ function loadKML(){
         });
 }
 
+// Build Map Opts
+function buildMapOpts(){
+  return {
+    zoom: zoomLevel,
+    center: centerCoord,
+    mapTypeControl: true,
+    mapTypeControlOptions: {
+      mapTypeIds: ['roadmap', 'satellite', 'hybrid', 'terrain']
+    },
+    mapTypeId: mapType
+  };
+}
+
 // Create anon function to setup input controls
 function loadUIInit(){
   $(function() {
-      $("#floating-panel").draggable();
+      $("#floating-panel").draggable({
+         scroll: false,
+         containment: $("#map")
+      });
       $("#floating-panel").addClass("ui-corner-all");
-    });
+  });
 
   $(function() {
       $("#time-slider").slider({
@@ -139,41 +144,49 @@ function loadUIInit(){
           value: 15,
           slide: function(event, ui) {
             var value = ui.value;
-            $("#time-label").html("Time: " + value + " min");
             $("#time-box").val(value);
-            $("#time-box").change();
+            changed=true;
+          },
+          start: function(event,ui){
+            changed=false;
+          },
+          stop: function(event, ui){
+            if(changed){
+             refreshDataSets();
+            }
           }
       });
     });
 
   $(function(){
     $("input[type=number]").addClass("ui-corner-all");
-    
-    $("input[type=number]").bind('change', function(){
-      var attrID = $(this).attr('id');
-      var val = Number($(this).val());
-      var min = Number($(this).attr('min'));
-      var max = Number($(this).attr('max'));
-      if(validateInput(val,max,min)){
-        if(attrID.indexOf("time")!==-1){
-          $("#time-slider").slider('value',val);
-          $("#time-label").html("Time: " + val + " min");
-          refreshDataSets();
-          return;
-        }else{
-          var index = textFilter.indexOf(attrID);
-          if(markersBase[index].getVisible()){
-            refreshDataSets();
-          }
-        }
-      }else{
-        $(this).val(15);
-        $(this).change();
-      }
-    });
+    $("input[type=number]").bind("change", changeInputNumber);
   });  
 }
 
+// Manipulate change event of input number
+function changeInputNumber(){
+  var attrID = $(this).attr("id");
+  var val = Number($(this).val());
+  var min = Number($(this).attr("min"));
+  var max = Number($(this).attr("max"));
+  if(validateInput(val,max,min)){
+    if(attrID.indexOf("time")!==-1){
+      $("#time-slider").slider("value",val);
+      refreshDataSets();
+    }else{
+      var index = textFilter.indexOf(attrID);
+      if(markersBase[index].getVisible()){
+        refreshDataSetsAt(index);
+      }
+    }
+  }else{
+    $(this).val(15);
+    $(this).change();
+  }
+}
+
+// Validate input range
 function validateInput(value,max,min){
   if(value<=max && value>=min){
     return true;
@@ -203,6 +216,7 @@ function loadMarker(index){
     position: locations[index],
 		map: map,
 		title: basename,
+    opacity: 0.8,
     icon: icon
   });
  	markersBase.push(marker);
@@ -212,16 +226,27 @@ function loadMarker(index){
 function refreshBaseMarkers(){
   var zoom = map.getZoom();
    for (var i = 0; i < markersBase.length; i++) {
-      if(zoom>=7 && zoom<=10){
+      if(zoom>=8 && zoom<10){
         markersBase[i].setIcon("img/map-marker-2-24.png");
-      }else if(zoom>=5 && zoom<7){
+      }else if(zoom>=6 && zoom<8){
         markersBase[i].setIcon("img/map-marker-2-16.png");
-      }else if(zoom<=4){
+      }else if(zoom<=5){
         markersBase[i].setIcon("img/map-marker-2-8.png");
       }else{
         markersBase[i].setIcon("img/map-marker-2-32.png");
       }
     }
+}
+
+// Refresh markers icons on zoom change
+function refreshMarkers(){
+  for (var i = 0; i < markersCollection.length; i++) {
+    for (var j = 0; j < markersCollection[i].length; j++) {
+      if(!isUndefined(markersCollection[i][j])){
+        markersCollection[i][j].setIcon("img/"+getIcon(i));
+      }
+    }
+  }
 }
 
 //Toogle base markers and respective markersCollection
@@ -238,7 +263,6 @@ function toogleBase(title){
     	}
 	  }
   }
-//  
 }
 
 // Validate lat, lng, time
@@ -248,13 +272,13 @@ function isUndefined(obj) { return (typeof obj==="undefined"); }
 
 // Remove markers from map before update collection
 function clearMarkersCollectionAt(index){
-   for (var j = 0; j < markersCollection[index].length; j++) {
-      if(!isUndefined(markersCollection[index][j])){
-        markersCollection[index][j].setMap(null);    
-      }
+  for (var j = 0; j < markersCollection[index].length; j++) {
+    if(!isUndefined(markersCollection[index][j])){
+      markersCollection[index][j].setMap(null);    
     }
-    markersCollection[index].length=0;
-    markersCollection[index]=[];
+  }
+  markersCollection[index].length=0;
+  markersCollection[index]=[];
 }
 
 // Refresh DataSets
@@ -267,7 +291,7 @@ function refreshDataSets(){
         var offset = Math.trunc(val-filter);
         if(offset>0 && offset<29){
         // console.log("Filter " + textFilter[i] + " : "+ filter);
-          var mapName = 'maps/'+offset+filesName[i];
+          var mapName = "maps/"+offset+filesName[i];
           readData(mapName,i);   
         }else{
           clearMarkersCollectionAt(i);
@@ -277,22 +301,18 @@ function refreshDataSets(){
   }
 }
 
+//Refresh collection at index
 function refreshDataSetsAt(index){
   var val = $("#time-slider").slider("option", "value");
   if(val>=0){
-    //for(var i=0;i<filesName.length;i++){
-    //  if(markersBase[i].getVisible()){
-        var filter = document.getElementById(textFilter[index]).value;
-        var offset = Math.trunc(val-filter);
-        if(offset>=0 && offset<29){
-        // console.log("Filter " + textFilter[i] + " : "+ filter);
-          var mapName = 'maps/'+offset+filesName[index];
-          readData(mapName,index);   
-        }else{
-          clearMarkersCollectionAt(index);
-        }
-     // }
-    //}
+    var filter = document.getElementById(textFilter[index]).value;
+    var offset = Math.trunc(val-filter);
+    if(offset>0 && offset<29){
+      var mapName = "maps/"+offset+filesName[index];
+      readData(mapName,index);   
+    }else{
+      clearMarkersCollectionAt(index);
+    }
   }
 }
 
@@ -302,9 +322,9 @@ function getIcon(index){
   var icon = "";
   var prefix = getPrefix();
   if(ind==0){
-    icon=prefix+'mark.png';
+    icon=prefix+"mark.png";
   }else {
-    icon=prefix+'mark'+ind+'.png';
+    icon=prefix+"mark"+ind+".png";
   }
   return icon;
 }
@@ -315,7 +335,7 @@ function getPrefix(){
   var zoom = map.getZoom();
   if(zoom>=11){
     prefix="16_";
-  }else if(zoom<11 && zoom>=10){
+  }else if(zoom<11 && zoom>9){
     prefix="8_";
   }else if(zoom<8 && zoom>=6){
     prefix="2_";
@@ -334,7 +354,7 @@ function processPoints(line,index){
     var val = point[2];
    if(isNumber(lat) && isNumber(lng) && isNumber(val)){
       var latLng = new google.maps.LatLng(lat,lng);
-      var icon = 'img/'+getIcon(index);
+      var icon = "img/"+getIcon(index);
       var marker = new google.maps.Marker({
         position: latLng,
         opacity: 0.5,

@@ -72,12 +72,44 @@ var markersBase=[];
 
 var markersCollection=[];
 
-var heatmap;
+var heatmap=[];
 
 
 //Initialize map
 function initMap() {
-  var mapOpt = {
+  
+  map = new google.maps.Map(document.getElementById("map"),buildMapOpts());
+
+  for(var i=0;i<filesName.length;i++){
+    loadMarker(i);
+    markersCollection[i] = [];
+    heatmap[i] = new google.maps.visualization.HeatmapLayer(buildHeatmapOpts(markersCollection[i]));
+  }
+
+  map.addListener("zoom_changed", updateRadius);
+  
+  loadUI();
+  loadKML();
+}
+
+function updateRadius(){
+   var zoom = map.getZoom();
+   var radius = 1;
+   if(zoom>=9){
+     radius=20;
+   }else if(zoom<=8 && zoom>6){
+     radius=5;
+   }else{
+     radius=1;
+   }
+   for (var i = 0; i < heatmap.length; i++) {
+    heatmap[i].set("radius",radius);
+  }
+}
+
+// MapOpts
+function buildMapOpts(){
+  return {
     zoom: zoomLevel,
     center: centerCoord,
     mapTypeControl: true,
@@ -86,34 +118,17 @@ function initMap() {
     },
     mapTypeId: mapType
   };
-  map = new google.maps.Map(document.getElementById('map'),mapOpt);
- 
-  for(var i=0;i<filesName.length;i++){
-    loadMarker(i);
-  }
- 
-  var heatmapOpt = {
+}
+
+// HeatmapOpts
+function buildHeatmapOpts(data){
+  return {
+    data: data,
     dissipating: true,
     opacity: 0.5,
     radius: 5,
     map: map
   };
-  heatmap = new google.maps.visualization.HeatmapLayer(heatmapOpt);
- 
-  map.addListener('zoom_changed', function() {
-    var zoom = map.getZoom();
-   // console.log("Zoom Level : " + zoomLevel);
-    if(zoom>=9){
-      heatmap.set('radius',20);
-    }else if(zoom<=8 && zoom>6){
-      heatmap.set('radius',5);
-    }else{
-      heatmap.set('radius',1);
-    }
-  });
-  
-  loadUIInit();
-  loadKML();
 }
 
 // Load Swiss KML File layer
@@ -128,11 +143,16 @@ function loadKML(){
         });
 }
 
-function loadUIInit(){
+// Setup UI Components
+function loadUI(){
+  // Build floating panel
   $(function() {
-    $( "#floating-panel" ).draggable();
+    $( "#floating-panel" ).draggable({
+         scroll: false,
+         containment: $("#map")
+      });
   });
-
+  // Build slider
   $(function() {
     $("#time-slider").slider({
       orientation: "horizontal",
@@ -142,43 +162,11 @@ function loadUIInit(){
       value: 0,
       slide: function(event, ui) {
         $("#time-label").html("Time: " + ui.value + " min");
-        if(ui.value>0){
-          refreshDataSets(ui.value);          
-        }
+      },
+      stop: function(event,ui){
+       refreshDataSets();          
       }
     });
-  });
-
-  $(function(){
-    $("input[type=number]").bind('change', function(){
-      var val = $(this).val();
-      if(val<=30 && val>=0){
-        var id = $(this).attr("id");
-        var index = textFilter.indexOf(id);
-        if(markersBase[index].getVisible()){
-          var timeWindow = $("#time-slider").slider("option", "value");
-          if(timeWindow>=0){
-            refreshDataSets(timeWindow);
-          }
-        }
-      }else{
-        $(this).val(15);
-        $("<div><p>Min 0 - Max 30 min</p></div>").dialog({
-              classes: {
-                "ui-dialog": "ui-state-error ui-corner-all",
-                "ui-dialog-content": "ui-state-error"
-              },
-              title: "Alert",
-              height: "auto",
-              width: "auto",
-              close: function (event, ui) { $(this).remove(); },
-              modal: true,
-              draggable: false,
-              resizable: false
-        });
-      }
-    });
-    $("input[type=number]").addClass("ui-corner-all");
   });
 }
 
@@ -202,47 +190,44 @@ function toogleBase(title){
    if(marker.getTitle()==title){
       if (!marker.getVisible()) {
         marker.setVisible(true);
+        refreshDataSets();
       } else {
         marker.setVisible(false);
+        clearMarkersCollectionAt(i);
       }
     }
-  }
-  var val = $("#time-slider").slider("option", "value");
-  //console.log("Value Slider UI : " + val);
-  if(val>0){
-    refreshDataSets(val);
   }
 }
 
 function isNumber(obj) { return !isNaN(parseFloat(obj)); } 
 
-
-function clearMarkersCollection(){
- // console.log("Before clear marker collection - Size : " + markersCollection[index].length);
-  for (var i = 0; i < markersCollection.length; i++) {
-    markersCollection[i]=null;
+// Clear markers collection at index
+function clearMarkersCollectionAt(index){
+  for (var i = 0; i < markersCollection[index].length; i++) {
+    markersCollection[index][i]=null;
   }
-  markersCollection.length=0;
-  markersCollection=[];
-  heatmap.setData(markersCollection);
-//  console.log("After clear marker collection - Size : " + markersCollection[index].length);
+  markersCollection[index].length=0;
+  markersCollection[index]=[];
+  heatmap[index].setData(markersCollection[index]);
 }
 
 // Refresh DataSets - Slider event
-function refreshDataSets(timeWindow){
-  clearMarkersCollection();
+function refreshDataSets(){
+  var timeWindow = $("#time-slider").slider("option", "value");
+//  console.log("Interval refresh : " + timeWindow);
   if(timeWindow>=0){
     for(var i=0;i<filesName.length;i++){
       var mapName = 'maps/'+ filesName[i];
       if(markersBase[i].getVisible()){
-        readData(mapName,timeWindow);
+  //      console.log("Read data : " + mapName + " - interval: "+ timeWindow);
+        readData(mapName,i,timeWindow);
       }
     }
   }
 }
 
 // Process each line of file
-function processPoints(line,timeWindow){
+function processPoints(line,index,timeWindow){
   var point = line.split(',');
   if(point.length==3){
     var lat = point[0];
@@ -254,26 +239,31 @@ function processPoints(line,timeWindow){
         //var weight = Math.exp(val);
         var weight = val*60;
         var weightedLocation = {location: latLng, weight: weight};
-        markersCollection.push(weightedLocation);        
+        markersCollection[index].push(weightedLocation);        
       }
     } 
   }
 }
 
+// Process file response
+function processResponse(response,index,timeWindow){
+  clearMarkersCollectionAt(index);
+  var responseLines = response.split('\n');
+  for(var i=0;i<responseLines.length;i++){
+    processPoints(responseLines[i],index,timeWindow); 
+  }
+  heatmap[index].setData(markersCollection[index]);
+}
+
 // Read data from server async
-function readData(filePath,timeWindow){
+function readData(filePath,index,timeWindow){
   var xmlhttp = new XMLHttpRequest();
   xmlhttp.open("GET", filePath, true);
-      //console.log("MapName : " + filePath);
   xmlhttp.onreadystatechange = function (e) {
     if (xmlhttp.readyState === 4) {
       if (xmlhttp.status === 200) {
         var response = xmlhttp.responseText;
-        var responseLines = response.split('\n');
-        for(var i=0;i<responseLines.length;i++){
-          processPoints(responseLines[i],timeWindow);         
-        }
-        heatmap.setData(markersCollection);
+        processResponse(response,index,timeWindow);
       } else {
         console.error(xmlhttp.statusText);
       }
