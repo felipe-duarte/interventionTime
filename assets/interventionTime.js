@@ -15,6 +15,16 @@ var moLatLng = {lat: 47.078056, lng: 9.066111};
 var zwLatLng = {lat: 46.554736, lng: 7.378989};
 var zhLatLng = {lat: 47.395948, lng: 8.637851};
 var geLatLng = {lat: 46.233611, lng: 6.096944};
+var birLatLng = {lat: 47.444688619234, lng: 8.233284951349};
+var lauLatLng = {lat: 46.585272013292, lng: 7.913599257773};
+var zerLatLng = {lat: 46.029098280690, lng: 7.752719434780};
+var rarLatLng = {lat: 46.302098523295, lng: 7.833583697179};
+var sioLatLng = {lat: 46.219070024226, lng: 7.326990622541};
+var colLatLng = {lat: 46.268360835202, lng: 6.959630639527};
+var leyLatLng = {lat: 46.341427438021, lng: 7.024282111378};
+var greLatLng = {lat: 47.181863501241, lng: 7.416249196411};
+var payLatLng = {lat: 46.844198896603, lng: 6.921326374768};
+var davLatLng = {lat: 46.756129990482, lng: 9.787867218069};
 
 var centerCoord = {lat: 46.823314, lng: 8.229163};
 var zoomLevel = 8;
@@ -22,7 +32,7 @@ var mapType = "terrain";
 
 var iconPath = "img/map-marker-2-24.png";
 
-var title=['TI','BE','BS','LS','GR','SG','UR','EN','BO','MO','ZH','ZW','GE'];
+var title=['TI','BE','BS','LS','GR','SG','UR','EN','BO','MO','ZH','ZW','GE','BIR','LAU','ZER','RAR','SIO','COL','LEY','GRE','PAY','DAV'];
 
 var locations=[
     tiLatLng,
@@ -37,7 +47,18 @@ var locations=[
     moLatLng,
     zhLatLng,
     zwLatLng,
-    geLatLng];
+    geLatLng,
+    birLatLng,
+    lauLatLng,
+    zerLatLng,
+    rarLatLng,
+    sioLatLng,
+    colLatLng,
+    leyLatLng,
+    greLatLng,
+    payLatLng,
+    davLatLng
+];
 
 var filesName=[
   'mapTi.txt',
@@ -52,7 +73,18 @@ var filesName=[
   'mapMo.txt',
   'mapZh.txt',
   'mapZw.txt',
-  'mapGe.txt'];
+  'mapGe.txt',
+  'mapBir.txt',
+  'mapLau.txt',
+  'mapZer.txt',
+  'mapRar.txt',
+  'mapSio.txt',
+  'mapCol.txt',
+  'mapLey.txt',
+  'mapGre.txt',
+  'mapPay.txt',
+  'mapDav.txt'
+];
 
 var textFilter=[
   'tiFilter',
@@ -67,23 +99,39 @@ var textFilter=[
   'moFilter',
   'zhFilter',
   'zwFilter',
-  'geFilter'
+  'geFilter',
+  'birFilter',
+  'lauFilter',
+  'zerFilter',
+  'rarFilter',
+  'sioFilter',
+  'colFilter',
+  'leyFilter',
+  'greFilter',
+  'payFilter',
+  'davFilter'
 ];
 
 var markersBase=[];
 
 var markersCollection=[];
 
-var swissLayerUrl = "http://ec2-54-203-139-105.us-west-2.compute.amazonaws.com/interventionTime/maps/swissLayer-kml.kml";
+var swissLayerUrl = "http://glammtest.com.verus.ch-meta.net/interventionTime/maps/swissLayer-kml.kml";
 
 var changed = false;
+
+var timeDelay = 2;
+
+var levels = [];
+
+var flagRead = [];
 
 //Initialize map - Call from GMaps script
 function initMap() {
   map = new google.maps.Map(document.getElementById('map'),buildMapOpts());
   map.addListener('zoom_changed', function() {
-    refreshMarkers();
     refreshBaseMarkers();
+    refreshMarkers();
   });
   initMarkersCollection();
   loadKML();
@@ -96,6 +144,7 @@ function initMarkersCollection(){
   for(var i=0;i<filesName.length;i++){
     loadMarker(i);
     markersCollection[i] = [];
+    flagRead = [];
   }
 }
 
@@ -161,7 +210,26 @@ function loadUIInit(){
   $(function(){
     $("input[type=number]").addClass("ui-corner-all");
     $("input[type=number]").bind("change", changeInputNumber);
-  });  
+  });
+
+  $(function(){
+    $("input[type=radio]").bind("change", function(){
+      var optId = $(this).attr("id");
+      if(optId=="dayOpt"){
+        updateFilters(15);
+      }else{
+        updateFilters(30);
+      }
+    });
+  });
+}
+
+// Update filters
+function updateFilters(offset){
+  for (var i = 0; i < textFilter.length; i++) {
+    $("#"+textFilter[i]).val(offset);
+    $("#"+textFilter[i]).change();
+  }
 }
 
 // Manipulate change event of input number
@@ -216,7 +284,8 @@ function loadMarker(index){
     position: locations[index],
 		map: map,
 		title: basename,
-    opacity: 0.8,
+    opacity: 0.9,
+    visible: false,
     icon: icon
   });
  	markersBase.push(marker);
@@ -243,11 +312,14 @@ function refreshMarkers(){
   for (var i = 0; i < markersCollection.length; i++) {
     for (var j = 0; j < markersCollection[i].length; j++) {
       if(!isUndefined(markersCollection[i][j])){
-        markersCollection[i][j].setIcon("img/"+getIcon(i));
+        if(markersCollection[i][j].getVisible()){
+          markersCollection[i][j].setIcon("img/"+getIcon(i));
+        }
       }
     }
   }
 }
+
 
 //Toogle base markers and respective markersCollection
 function toogleBase(title){
@@ -270,32 +342,29 @@ function isNumber(obj) { return !isNaN(parseFloat(obj)); }
 
 function isUndefined(obj) { return (typeof obj==="undefined"); }
 
+// Clear all markers
+function clearMarkersCollection(){
+  for (var i = 0; i < markersCollection.length; i++) {
+    clearMarkersCollectionAt(i);
+  }
+}
+
 // Remove markers from map before update collection
 function clearMarkersCollectionAt(index){
   for (var j = 0; j < markersCollection[index].length; j++) {
     if(!isUndefined(markersCollection[index][j])){
-      markersCollection[index][j].setMap(null);    
+      markersCollection[index][j].setVisible(false);    
     }
   }
-  markersCollection[index].length=0;
-  markersCollection[index]=[];
 }
 
-// Refresh DataSets
+// Refresh all visible DataSets
 function refreshDataSets(){
-  var val = $("#time-slider").slider("option", "value");
+  var val = Number($("#time-slider").slider("option", "value"));
   if(val>=0){
     for(var i=0;i<filesName.length;i++){
       if(markersBase[i].getVisible()){
-        var filter = document.getElementById(textFilter[i]).value;
-        var offset = Math.trunc(val-filter);
-        if(offset>0 && offset<29){
-        // console.log("Filter " + textFilter[i] + " : "+ filter);
-          var mapName = "maps/"+offset+filesName[i];
-          readData(mapName,i);   
-        }else{
-          clearMarkersCollectionAt(i);
-        }
+        refreshDataSetsAt(i);
       }
     }
   }
@@ -303,22 +372,48 @@ function refreshDataSets(){
 
 //Refresh collection at index
 function refreshDataSetsAt(index){
-  var val = $("#time-slider").slider("option", "value");
+  var val = Number($("#time-slider").slider("option", "value"));
   if(val>=0){
-    var filter = document.getElementById(textFilter[index]).value;
-    var offset = Math.trunc(val-filter);
-    if(offset>0 && offset<29){
-      var mapName = "maps/"+offset+filesName[index];
-      readData(mapName,index);   
-    }else{
-      clearMarkersCollectionAt(index);
+    clearMarkersCollectionAt(index);
+    var filter = Number(document.getElementById(textFilter[index]).value);
+    var offset = Math.trunc(val-filter-timeDelay);
+    if(offset>=0 && offset<=29){
+      levels[index] = offset;
+      //for (var i = 0; i <= offset; i++) {
+        if(!flagRead[index]){
+          flagRead[index] = true;
+          var mapName = "maps/"+ filesName[index];
+          readData(mapName,index);
+        }else{
+          reloadMarkers(index);
+        }
+     // }
+     }
+  }
+}
+
+// Reload markers already in the collection at index
+function reloadMarkers(index){
+  for (var i = 0; i < markersCollection[index].length; i++) {
+    if(!isUndefined(markersCollection[index][i])){
+      var level = Number(markersCollection[index][i].level);
+      if(level<levels[index]){
+        var opacity = calculateOpacityMarker(index,level);
+        var icon = "img/"+getIcon(index);
+        markersCollection[index][i].setOpacity(opacity);
+        markersCollection[index][i].setIcon(icon);
+        markersCollection[index][i].setVisible(true);
+      }else{
+        markersCollection[index][i].setVisible(false);
+      }
     }
   }
 }
 
+
 // Marker Icon based on index mod
 function getIcon(index){ 
-  var ind = index%13;
+  var ind = index%(locations.length+1);
   var icon = "";
   var prefix = getPrefix();
   if(ind==0){
@@ -329,7 +424,7 @@ function getIcon(index){
   return icon;
 }
 
-// Prefix of marker based on zoom level (1,2,8,16 - Default 4px without prefix)
+// Prefix of marker based on zoom level (1,2,8,16)
 function getPrefix(){
   var prefix="";
   var zoom = map.getZoom();
@@ -337,17 +432,33 @@ function getPrefix(){
     prefix="16_";
   }else if(zoom<11 && zoom>9){
     prefix="8_";
-  }else if(zoom<8 && zoom>=6){
+  }else if(zoom<=8 && zoom>7){
     prefix="2_";
-  }else if(zoom<6){
+  }else if(zoom<=7){
     prefix="1_";
   }
   return prefix;
 }
 
+// Calculate marker opacity
+function calculateOpacityMarker(index,val){
+  if(Number(levels[index])>0){
+    return 0.5 - Number(((0.5/levels[index])*(levels[index]-(Number(val)+1.0))));
+  }else{
+    return 0.5;
+  }
+}
+
+// Refresh opacity
+function refreshOpacity(index){
+  for (var i = 0; i < markersCollection[index].length; i++) {
+    markersCollection[index][i].setOpacity(calculateOpacityMarker(index,markersCollection[index][i].level));
+  }
+}
+
 // Process each line of file
 function processPoints(line,index){
-  var point = line.split(',');
+  var point = line.split(",");
   if(point.length==3){
     var lat = point[0];
     var lng = point[1];
@@ -355,12 +466,14 @@ function processPoints(line,index){
    if(isNumber(lat) && isNumber(lng) && isNumber(val)){
       var latLng = new google.maps.LatLng(lat,lng);
       var icon = "img/"+getIcon(index);
+      var opacity = calculateOpacityMarker(index,val);
       var marker = new google.maps.Marker({
         position: latLng,
-        opacity: 0.5,
+        opacity: opacity,
         clickable: false,
         map: map,
-        icon: icon
+        icon: icon,
+        level: val
       });
       markersCollection[index].push(marker);
     } 
@@ -368,58 +481,26 @@ function processPoints(line,index){
 }
 
 // Process file response
-function processResponse(response,index){
-  clearMarkersCollectionAt(index);
-  var responseLines = response.split('\n');
+function processResponseAjax(response,index){
+  var responseLines = response.split("\n");
   for(var i=0;i<responseLines.length;i++){
-    processPoints(responseLines[i],index);         
+    processPoints(responseLines[i],index);
   }
+  reloadMarkers(index);    
 }
 
 // Read data from server async
-function readData(filePath,index){
-  var xmlhttp = new XMLHttpRequest();
-  xmlhttp.open("GET", filePath, true);
-  xmlhttp.onreadystatechange = function (e) {
-    if (xmlhttp.readyState === 4) {
-      if (xmlhttp.status === 200) {
-        var response = xmlhttp.responseText;
-        processResponse(response,index);
-      } else {
-        console.error(xmlhttp.statusText);
-      }
-    }
-  };
-  xmlhttp.onerror = function (e) {
-    console.error(xmlhttp.statusText);
-  };
-  xmlhttp.send(null);
-}
+function readData(filePath, index){
+  var xhrJq = jQuery.ajax({
+    url:filePath
+  });
 
-//Random function to generate points around a center coordinate
-function randomGeo(center, radius) {
-  var y0 = center.lat;
-  var x0 = center.lng;
-  var rd = radius / 111300;
-  var u = Math.random();
-  var v = Math.random();
-  var w = rd * Math.sqrt(u);
-  var t = 2 * Math.PI * v;
-  var x = w * Math.cos(t);
-  var y = w * Math.sin(t);
-  var xp = x / Math.cos(y0);
-  return {
-      'lat': y + y0,
-      'lng': xp + x0
-  };
-}
+  xhrJq.done(function(data){
+    processResponseAjax(data,index);
+  });
 
-// Heatmap data: 500 Points
-function getPoints(center) {
-  var lotsOfMarkers = [];
-  for( var i = 1; i <= 500; i++) {
-   var random = new google.maps.LatLng(randomGeo(center,8000));
-   lotsOfMarkers.push(random);
-  }
-  return lotsOfMarkers;
+  xhrJq.fail(function( jqXHR, textStatus ) {
+    flagRead[index] = false;
+    console.error( "Request failed: " + textStatus );
+  });
 }

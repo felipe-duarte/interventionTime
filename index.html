@@ -2,9 +2,6 @@
   <html>
   <head>
     <meta charset="utf-8">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
     <title>Intervention Time</title>
     <style>
         /* Always set the map height explicitly to define the size of the div
@@ -25,23 +22,23 @@
           background-color: rgba(210,210,210,.5); 
           padding: 10px;
           position:absolute;
-          top:70px;
+          top:60px;
           left:10px;
           cursor: move;
           border: black 1px solid;
           font-family: "Helvetica", "Arial" , sans-serif;
           font-weight: bold;
-          font-size: 1em;
+          font-size: 0.8em;
         }
 
         #time-label{
-          margin-top: 10px;
-          margin-bottom: 10px;
+          margin-top: 5px;
+          margin-bottom: 5px;
         }
 
         #time-slider{
           width: 180px;
-          margin: 5px;
+          margin: 2px;
           color: #CCCCCC;
           cursor:pointer;
         }
@@ -72,11 +69,22 @@
           padding: 0px;
         }
 
+        #group-filter{
+          width: 75%;
+          padding: 0px;
+          margin: auto;
+        }
+
         input[type="number"] {
           width: 35px;
           font-size: 0.9em;
         }
 
+        hr{
+          padding: 0px;
+          margin: 3px;
+          size: 0.9em;
+        }
 
       </style>
     </head>
@@ -100,16 +108,23 @@
 
         <div id="time-slider"></div>          
 
-        <div>
-          <hr>
+        <hr>
+       
+        <div id="group-filter">
+          <input type="radio" id="dayOpt" checked="checked" name="filter">
+          <label for="dayOpt">Day</label>
+          <input type="radio" id="nightOpt" name="filter">
+          <label for="dayOpt">Night</label>
         </div>
+        
+        <hr>
         
         <div>
           <table id="table-base">
 
             <div>
               <tr><td>
-                <input id="zhCheckbox" name="zhCheckbox" value="ZH" type="checkbox" checked="true" onclick="toogleBase('ZH')">
+                <input id="zhCheckbox" name="zhCheckbox" value="ZH" type="checkbox" onclick="toogleBase('ZH')">
                 <label for="zhCheckbox">ZH</label>
               </td>
               <td>
@@ -119,7 +134,7 @@
 
             <div>
               <tr><td>
-                <input id="bsCheckbox" name="bsCheckbox" value="BS" type="checkbox" checked="true" onclick="toogleBase('BS')">
+                <input id="bsCheckbox" name="bsCheckbox" value="BS" type="checkbox" onclick="toogleBase('BS')">
                 <label for="bsCheckbox">BS</label>
               </td>
               <td>
@@ -129,7 +144,7 @@
 
             <div>
               <tr><td>
-                <input id="beCheckbox" name="beCheckbox" value="BE" type="checkbox" checked="true" onclick="toogleBase('BE')">
+                <input id="beCheckbox" name="beCheckbox" value="BE" type="checkbox" onclick="toogleBase('BE')">
                 <label for="beCheckbox">BE</label>
               </td>
               <td>
@@ -139,7 +154,7 @@
 
             <div>
               <tr><td>
-                <input id="lsCheckbox" name="lsCheckbox" value="LS" type="checkbox" checked="true" onclick="toogleBase('LS')">
+                <input id="lsCheckbox" name="lsCheckbox" value="LS" type="checkbox" onclick="toogleBase('LS')">
                 <label for="lsCheckbox">LS</label>
               </td>
               <td>
@@ -149,7 +164,7 @@
 
             <div>
               <tr><td>
-                <input id="grCheckbox" name="grCheckbox" value="GR" type="checkbox" checked="true" onclick="toogleBase('GR')">
+                <input id="grCheckbox" name="grCheckbox" value="GR" type="checkbox" onclick="toogleBase('GR')">
                 <label for="grCheckbox">GR</label>
               </td>
               <td>
@@ -159,7 +174,7 @@
 
             <div>
               <tr><td>
-                <input id="tiCheckbox" name="tiCheckbox" value="TI" type="checkbox" checked="true" onclick="toogleBase('TI')">
+                <input id="tiCheckbox" name="tiCheckbox" value="TI" type="checkbox" onclick="toogleBase('TI')">
                 <label for="tiCheckbox">TI</label>
               </td>
               <td>
@@ -169,7 +184,7 @@
 
             <div>
               <tr><td>
-                <input id="sgCheckbox" name="sgCheckbox" value="SG" type="checkbox" checked="true" onclick="toogleBase('SG')">
+                <input id="sgCheckbox" name="sgCheckbox" value="SG" type="checkbox" onclick="toogleBase('SG')">
                 <label for="sgCheckbox">SG</label>
               </td>
               <td>
@@ -179,7 +194,7 @@
 
             <div>
               <tr><td>
-                <input id="urCheckbox" name="urCheckbox" value="UR" type="checkbox" checked="true" onclick="toogleBase('UR')">
+                <input id="urCheckbox" name="urCheckbox" value="UR" type="checkbox" onclick="toogleBase('UR')">
                 <label for="urCheckbox">UR</label>
               </td>
               <td>
@@ -189,7 +204,7 @@
 
             <div>
               <tr><td>
-                <input id="enCheckbox" name="enCheckbox" value="EN" type="checkbox" checked="true" onclick="toogleBase('EN')">
+                <input id="enCheckbox" name="enCheckbox" value="EN" type="checkbox" onclick="toogleBase('EN')">
                 <label for="enCheckbox">EN</label>
               </td>
               <td>
@@ -199,7 +214,7 @@
 
             <div>
               <tr><td>
-                <input id="boCheckbox" name="boCheckbox" value="BO" type="checkbox" checked="true" onclick="toogleBase('BO')">
+                <input id="boCheckbox" name="boCheckbox" value="BO" type="checkbox" onclick="toogleBase('BO')">
                 <label for="boCheckbox">BO</label>
               </td>
               <td>
@@ -209,7 +224,7 @@
 
             <div>
               <tr><td>
-                <input id="moCheckbox" name="moCheckbox" value="MO" type="checkbox" checked="true" onclick="toogleBase('MO')">
+                <input id="moCheckbox" name="moCheckbox" value="MO" type="checkbox" onclick="toogleBase('MO')">
                 <label for="moCheckbox">MO</label>
               </td>
               <td>
@@ -219,7 +234,7 @@
 
             <div>
               <tr><td>
-                <input id="zwCheckbox" name="zwCheckbox" value="ZW" type="checkbox" checked="true" onclick="toogleBase('ZW')">
+                <input id="zwCheckbox" name="zwCheckbox" value="ZW" type="checkbox" onclick="toogleBase('ZW')">
                 <label for="zwCheckbox">ZW</label>
               </td>
               <td>
@@ -229,18 +244,86 @@
           </table>
         </div>
 
-        <div>
-          <hr>
-        </div>
+        <hr>
 
         <div>
           <table id="table-base">
             <tr><td>
-              <input id="geCheckbox" name="geCheckbox" value="GE" type="checkbox" checked="true" onclick="toogleBase('GE')">
+              <input id="geCheckbox" name="geCheckbox" value="GE" type="checkbox" onclick="toogleBase('GE')">
               <label for="geCheckbox">GE</label>
             </td>
             <td>
               <input id="geFilter" type="number" name="geFilter" min="0" max="30" value="15" step="1">
+            </td></tr>
+            <tr><td>
+              <input id="birCheckbox" name="birCheckbox" value="BIR" type="checkbox" onclick="toogleBase('BIR')">
+              <label for="birCheckbox">BIR</label>
+            </td>
+            <td>
+              <input id="birFilter" type="number" name="birFilter" min="0" max="30" value="15" step="1">
+            </td></tr>
+            <tr><td>
+              <input id="lauCheckbox" name="lauCheckbox" value="LAU" type="checkbox" onclick="toogleBase('LAU')">
+              <label for="lauCheckbox">LAU</label>
+            </td>
+            <td>
+              <input id="lauFilter" type="number" name="lauFilter" min="0" max="30" value="15" step="1">
+            </td></tr>
+            <tr><td>
+              <input id="zerCheckbox" name="zerCheckbox" value="ZER" type="checkbox" onclick="toogleBase('ZER')">
+              <label for="zerCheckbox">ZER</label>
+            </td>
+            <td>
+              <input id="zerFilter" type="number" name="zerFilter" min="0" max="30" value="15" step="1">
+            </td></tr>
+            <tr><td>
+              <input id="rarCheckbox" name="rarCheckbox" value="RAR" type="checkbox" onclick="toogleBase('RAR')">
+              <label for="rarCheckbox">RAR</label>
+            </td>
+            <td>
+              <input id="rarFilter" type="number" name="rarFilter" min="0" max="30" value="15" step="1">
+            </td></tr>
+            <tr><td>
+              <input id="sioCheckbox" name="sioCheckbox" value="SIO" type="checkbox" onclick="toogleBase('SIO')">
+              <label for="sioCheckbox">SIO</label>
+            </td>
+            <td>
+              <input id="sioFilter" type="number" name="sioFilter" min="0" max="30" value="15" step="1">
+            </td></tr>
+            <tr><td>
+              <input id="colCheckbox" name="colCheckbox" value="COL" type="checkbox" onclick="toogleBase('COL')">
+              <label for="colCheckbox">COL</label>
+            </td>
+            <td>
+              <input id="colFilter" type="number" name="colFilter" min="0" max="30" value="15" step="1">
+            </td></tr>
+            <tr><td>
+              <input id="leyCheckbox" name="leyCheckbox" value="LEY" type="checkbox" onclick="toogleBase('LEY')">
+              <label for="leyCheckbox">LEY</label>
+            </td>
+            <td>
+              <input id="leyFilter" type="number" name="leyFilter" min="0" max="30" value="15" step="1">
+            </td></tr>
+            <tr><td>
+              <input id="greCheckbox" name="greCheckbox" value="GRE" type="checkbox" onclick="toogleBase('GRE')">
+              <label for="greCheckbox">GRE</label>
+            </td>
+            <td>
+              <input id="greFilter" type="number" name="greFilter" min="0" max="30" value="15" step="1">
+            </td></tr>
+            <tr><td>
+              <input id="payCheckbox" name="payCheckbox" value="PAY" type="checkbox" onclick="toogleBase('PAY')">
+              <label for="payCheckbox">PAY</label>
+            </td>
+            <td>
+              <input id="payFilter" type="number" name="payFilter" min="0" max="30" value="15" step="1">
+            </td></tr>
+            <tr><td>
+              <input id="davCheckbox" name="davCheckbox" value="GE" type="checkbox" onclick="toogleBase('DAV')">
+              <label for="davCheckbox">DAV</label>
+            </td>
+            <td>
+              <input id="davFilter" type="number" name="davFilter" min="0" max="30" value="15" step="1">
             </td></tr>
           </table>
         </div>
@@ -249,9 +332,10 @@
       
       <div id="map"></div>
       
-      <script src="assets/jquery-3.2.1.min.js"></script>
-      <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-      <script src="assets/interventionTime.js"></script>
+      <script type="text/javascript" src="assets/jquery-3.2.1.min.js"></script>
+      <script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+      <script type="text/javascript" src="assets/interventionTime.js"></script>
+
 
       <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
       
